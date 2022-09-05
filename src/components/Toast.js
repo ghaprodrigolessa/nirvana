@@ -1,38 +1,36 @@
 /* eslint eqeqeq: "off" */
-import React, { useState, useEffect } from 'react';
+import React, { useContext } from 'react';
+import Context from '../pages/Context';
 
-function Toast({ valortoast, cor, mensagem }) {
-  const [viewtoast, setviewtoast] = useState(0);
-  useEffect(() => {
-    setviewtoast(valortoast);
-  }, [valortoast])
+function Toast() {
 
-  if (viewtoast === 1) {
-    return (
-      <div className="toast" style={{ zIndex: 999, position: 'fixed', top: 0, bottom: 0, left: 0, right: 0 }}>
-        <div className="menucover">
-          <div
-            className="secondary"
-            style={{
-              alignItems: 'center',
-              textAlign: 'center',
-              backgroundColor: cor,
-              padding: 25,
-              minHeight: 50,
-              maxHeight: 300,
-              minWidth: 100,
-              maxWidth: 300,
-              color: '#ffffff',
-              fontWeight: 'bold',
-            }}>
-            {mensagem}
-          </div>
-        </div>
+  const {
+    toast,
+  } = useContext(Context)
+
+  return (
+    <div className="toasty"
+      style={{ zIndex: 999, position: 'fixed', bottom: 20, right: 20 }}>
+      <div
+        style={{
+          display: toast.display,
+          alignItems: 'center',
+          textAlign: 'center',
+          backgroundColor: toast.cor,
+          padding: 10,
+          minHeight: 50,
+          maxHeight: 300,
+          minWidth: 100,
+          maxWidth: 300,
+          color: '#ffffff',
+          fontWeight: 'bold',
+          fontSize: 14,
+          borderRadius: 5,
+        }}>
+        {toast.mensagem}
       </div>
-    );
-  } else {
-    return null;
-  }
+    </div >
+  );
 }
 
 export default Toast;
