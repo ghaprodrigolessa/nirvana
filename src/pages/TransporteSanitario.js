@@ -51,7 +51,18 @@ function TransporteSanitario() {
       indicador_chegada_destino: obj.indicador_chegada_destino,
       dados_susfacil: obj.dados_susfacil,
       exames_ok: obj.exames_ok,
-      aih_ok: obj.aih_ok
+      aih_ok: obj.aih_ok,
+      glasgow: obj.glasgow,
+      pas: obj.pas,
+      pad: obj.pad,
+      fc: obj.fc,
+      fr: obj.fr,
+      sao2: obj.sao2,
+      ofertao2: obj.ofertao2,
+      tipo_leito: obj.tipo_leito,
+      contato_nome: obj.contato_nome,
+      contato_telefone: obj.contato_telefone,
+      leito_destino: obj.leito_destino
     }
     axios.post(html + 'update_paciente/' + obj.id, objeto).then(() => {
       loadPacientes();
@@ -96,7 +107,18 @@ function TransporteSanitario() {
           indicador_chegada_destino: valor.indicador_chegada_destino,
           dados_susfacil: valor.dados_susfacil,
           exames_ok: valor.exames_ok,
-          aih_ok: valor.aih_ok
+          aih_ok: valor.aih_ok,
+          glasgow: valor.glasgow,
+          pas: valor.pas,
+          pad: valor.pad,
+          fc: valor.fc,
+          fr: valor.fr,
+          sao2: valor.sao2,
+          ofertao2: valor.ofertao2,
+          tipo_leito: valor.tipo_leito,
+          contato_nome: valor.contato_nome,
+          contato_telefone: valor.contato_telefone,
+          leito_destino: valor.leito_destino
         }
       )
       return null;

@@ -40,8 +40,36 @@ function Pacientes() {
   const [paciente, setpaciente] = useState([]);
   var obj = {}
 
-  // obj utilizado para atualizar registro de paciente na checagem de relatório, exames e assinatura de AIH.
-  const makeObj = (item) => {
+  // definindo os atributos de obj para inserir ou atualizar registro de paciente. 
+  const mountObj = () => {
+    obj.aih = document.getElementById("inputAih").value;
+    obj.procedimento = document.getElementById("inputProcedimento").value;
+    obj.unidade_origem = usuario.unidade;
+    obj.setor_origem = null;
+    obj.nome_paciente = document.getElementById("inputNome").value.toUpperCase();
+    obj.nome_mae = document.getElementById("inputNomeMae").value;
+    obj.dn_paciente = moment(document.getElementById("inputDn").value, 'DD/MM/YYYY');
+    obj.status = 'AGUARDANDO VAGA';
+    obj.unidade_destino = null;
+    obj.indicador_data_cadastro = moment();
+    obj.indicador_data_confirmacao = null;
+    obj.indicador_relatorio = null;
+    obj.indicador_solicitacao_transporte = null;
+    obj.indicador_saida_origem = null;
+    obj.indicador_chegada_destino = null;
+    obj.dados_susfacil = document.getElementById("inputResumo").value;
+    obj.exames_ok = 0;
+    obj.aih_ok = 0;
+    obj.glasgow = document.getElementById("inputGlasgow").value;
+    obj.pas = document.getElementById("inputPas").value;
+    obj.pad = document.getElementById("inputPad").value;
+    obj.fc = document.getElementById("inputFc").value;
+    obj.fr = document.getElementById("inputFr").value;
+    obj.sao2 = document.getElementById("inputSao2").value;
+  }
+
+  // carregando obj para atualizações do registro de paciente na checagem de relatório, exames, ssinatura de AIH e mudanças de status.
+  const loadObj = (item) => {
     obj = {
       aih: item.aih,
       procedimento: item.procedimento,
@@ -61,7 +89,18 @@ function Pacientes() {
       indicador_chegada_destino: item.indicador_chegada_destino,
       dados_susfacil: item.dados_susfacil,
       exames_ok: item.exames_ok,
-      aih_ok: item.aih_ok
+      aih_ok: item.aih_ok,
+      glasgow: item.glasgow,
+      pas: item.pas,
+      pad: item.pad,
+      fc: item.fc,
+      fr: item.fr,
+      sao2: item.sao2,
+      ofertao2: item.ofertao2,
+      tipo_leito: item.tipo_leito,
+      contato_nome: item.contato_nome,
+      contato_telefone: item.contato_telefone,
+      leito_destino: item.leito_destino
     }
   }
 
@@ -123,7 +162,7 @@ function Pacientes() {
           data_pedido: valor.data_pedido,
           unidade_destino: valor.unidade_destino,
           setor_destino: valor.setor_destino,
-          status: 'TRANSPORTE CANCELADO PELA ORIGEM',
+          status: 'TRANSPORTE CANCELADO',
           justificativa_recusa: justificativa,
         }
       )
@@ -136,9 +175,9 @@ function Pacientes() {
 
   useEffect(() => {
     if (pagina == 1) {
-      loadPacientes();
-      makeObj(paciente);
       loadTransportes();
+      loadPacientes();
+      loadObj(paciente);
     }
     // eslint-disable-next-line
   }, [pagina])
@@ -174,16 +213,19 @@ function Pacientes() {
     searchpaciente = document.getElementById("inputPaciente").value.toUpperCase();
     timeout = setTimeout(() => {
       if (searchpaciente == '') {
+        setfilterpaciente('');
         setarraypacientes(pacientes);
         document.getElementById("inputPaciente").value = '';
-        document.getElementById("inputPaciente").focus();
+        setTimeout(() => {
+          document.getElementById("inputPaciente").focus();
+        }, 100);
       } else {
         setfilterpaciente(document.getElementById("inputPaciente").value.toUpperCase());
         setarraypacientes(pacientes.filter(item => item.nome_paciente.toUpperCase().includes(searchpaciente) == true));
         document.getElementById("inputPaciente").value = searchpaciente;
         setTimeout(() => {
           document.getElementById("inputPaciente").focus();
-        }, 500);
+        }, 100);
       }
     }, 1000);
   }
@@ -219,8 +261,8 @@ function Pacientes() {
   TRANSPORTE COM PACIENTE
   TRANSPORTE ENCERRADO
   TRANSPORTE CANCELADO
-  VAGA CANCELADA NA ORIGEM
-  VAGA CANCELADA NO DESTINO
+  AIH CANCELADA NA ORIGEM
+  AIH CANCELADA NO DESTINO
   */
 
   // lista de pacientes internados.
@@ -250,7 +292,7 @@ function Pacientes() {
         <div className="text3">LISTA DE PACIENTES INTERNADOS</div>
         <div className="header">
           <div className="button-transparent" style={{ width: '10vw', marginLeft: 70 }}>
-            UNIDADE DE ORIGEM
+            TIPO DE LEITO
           </div>
           <div className="button-transparent" style={{ width: '10vw' }}>
             AIH
@@ -272,7 +314,7 @@ function Pacientes() {
           </div>
         </div>
         <div className="scroll" style={{ height: '70vh', display: arraypacientes.length > 0 ? 'flex' : 'none' }}>
-          {arraypacientes.sort((a, b) => moment(a.indicador_data_cadastro) < moment(b.indicador_data_cadastro) ? 1 : -1).map(item => (
+          {arraypacientes.filter(item => item.unidade_origem == usuario.unidade).sort((a, b) => moment(a.indicador_data_cadastro) < moment(b.indicador_data_cadastro) ? 1 : -1).map(item => (
             <div key={'pacientes' + item.id}>
               <div
                 className="row"
@@ -282,7 +324,7 @@ function Pacientes() {
                   document.getElementById("conteudo" + item.id).classList.toggle("show");
                 }}
               >
-                <div className="button-yellow"
+                <div id="editar paciente" className="button-yellow"
                   onClick={() => setvieweditpaciente(2)}
                 >
                   <img
@@ -296,7 +338,7 @@ function Pacientes() {
                   ></img>
                 </div>
                 <div className="button" style={{ width: '10vw' }}>
-                  {item.unidade_origem}
+                  {item.tipo_leito}
                 </div>
                 <div className="button" style={{ width: '10vw' }}>
                   {item.aih}
@@ -311,22 +353,13 @@ function Pacientes() {
                   }}>
                   {item.nome_paciente}
                 </div>
-                <div className={
-                  item.status == 'AGUARDANDO VAGA' ? 'button-red' :
-                    item.status == 'VAGA LIBERADA' ? 'button destaque' : // requer tomada de ação, por isso o destaque.
-                      item.status == 'TRANSPORTE SOLICITADO' ? 'button-green' :
-                        item.status == 'TRANSPORTE LIBERADO' ? 'button-green' :
-                          item.status == 'TRANSPORTE COM PACIENTE' ? 'button-green' :
-                            item.status == 'TRANSPORTE ENCERRADO' ? 'button-green' :
-                              item.status == 'TRANSPORTE CANCELADO' ? 'button-red' :
-                                item.status == 'VAGA CANCELADA NA ORIGEM' ? 'button-red' :
-                                  item.status == 'VAGA CANCELADA NO DESTINO' ? 'button-red' :
-                                    'button'}
+                <div className={item.status == 'VAGA LIBERADA' ? "button destaque" : "button"}
                   style={{ width: '15vw' }}>
                   {item.status}
                 </div>
-                <div className={item.unidade_destino == null ? "button destaque" : "button-green"} style={{ width: '10vw' }}
-                  onClick={() => setviewdestinoselector(1)}
+                <div className={item.status == 'AGUARDANDO VAGA' ? "button destaque" : "button"}
+                  style={{ width: '10vw' }}
+                  onClick={item.status == "AGUARDANDO VAGA" ? () => setviewdestinoselector(1) : () => null}
                 >
                   {item.unidade_destino}
                 </div>
@@ -344,16 +377,41 @@ function Pacientes() {
   // componente para inserir ou atualizar um registro de paciente.
   const [vieweditpaciente, setvieweditpaciente] = useState(0);
   var timeout = null;
+  var suplementacaoO2 = ['CN 1-4L/MIN', 'MF 5-12L/MIN', 'VM']
   const EditPaciente = useCallback(() => {
+    obj.tipo_leito = paciente.tipo_leito;
+    obj.ofertao2 = paciente.ofertao2;
     return (
       <div className="fundo"
         style={{ display: vieweditpaciente > 0 ? 'flex' : 'none' }}
         onClick={() => setvieweditpaciente(0)}
       >
-        <div className="janela" style={{ position: 'relative', flexDirection: 'row', justifyContent: 'space-between', flexWrap: 'wrap', margin: 50, width: '65vw' }}
+        <div className="janela" style={{
+          position: 'relative',
+          display: 'flex', flexDirection: 'row', justifyContent: 'space-between',
+          flexWrap: 'wrap', margin: 50, width: '65vw', alignItems: 'center',
+        }}
           onClick={(e) => e.stopPropagation()}
         >
-          <div style={{ display: 'flex', flexDirection: 'row', width: '100%' }}>
+          <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', width: '100%' }}>
+            <div id="selectcti" className={paciente.tipo_leito == 'CTI' ? 'button-yellow' : 'button'} style={{ width: 100, height: 50 }}
+              onClick={() => {
+                document.getElementById("selectenf").className = "button";
+                document.getElementById("selectcti").className = "button-yellow";
+                obj.tipo_leito = 'CTI';
+              }}
+            >
+              CTI
+            </div>
+            <div id="selectenf" className={paciente.tipo_leito == 'ENFERMARIA' ? 'button-yellow' : 'button'} style={{ width: 100, height: 50 }}
+              onClick={() => {
+                document.getElementById("selectenf").className = "button-yellow";
+                document.getElementById("selectcti").className = "button";
+                obj.tipo_leito = 'ENFERMARIA';
+              }}
+            >
+              ENFERMARIA
+            </div>
             <input
               autoComplete="off"
               placeholder="AIH"
@@ -368,7 +426,7 @@ function Pacientes() {
               style={{
                 marginTop: 10,
                 marginBottom: 10,
-                width: '25vw',
+                width: '15vw',
                 height: 50,
               }}
             ></input>
@@ -386,7 +444,7 @@ function Pacientes() {
               style={{
                 marginTop: 10,
                 marginBottom: 10,
-                width: '25vw',
+                width: '15vw',
                 height: 50,
               }}
             ></input>
@@ -408,21 +466,19 @@ function Pacientes() {
                   }}
                 ></img>
               </div>
-              <div className='button-green'
+              <div
+                className='button-green'
                 title={vieweditpaciente == 1 ? 'SALVAR' : 'ATUALIZAR'}
                 onClick={vieweditpaciente == 1 ?
-                  (e) => {
-                    insertPaciente(); setvieweditpaciente(0); e.stopPropagation();
+                  () => {
+                    mountObj();
+                    insertPaciente();
+                    setvieweditpaciente(0);
                   } :
-                  (e) => {
-                    makeObj(paciente);
-                    obj.aih = document.getElementById("inputAih").value;
-                    obj.procedimento = document.getElementById("inputProcedimento").value;
-                    obj.nome_paciente = document.getElementById("inputNome").value.toUpperCase();
-                    obj.dn_paciente = moment(document.getElementById("inputDn").value, 'DD/MM/YYYY');
-                    obj.nome_mae = document.getElementById("inputNomeMae").value;
-                    obj.dados_susfacil = document.getElementById("inputDados").value;
-                    updatePaciente(paciente.id, 'sim'); setvieweditpaciente(0); e.stopPropagation();
+                  () => {
+                    mountObj();
+                    updatePaciente(paciente.id, 'sim');
+                    setvieweditpaciente(0);
                   }}
               >
                 <img
@@ -475,7 +531,7 @@ function Pacientes() {
                     document.getElementById("inputDn").value = '';
                     data = '';
                   }
-                }, 3000);
+                }, 1000);
               }}
               defaultValue={moment(paciente.dn_paciente).format('DD/MM/YYYY')}
               type="text"
@@ -505,21 +561,227 @@ function Pacientes() {
               }}
             ></input>
           </div>
+          <div className="text1" style={{ width: '100%' }}>DADOS VITAIS</div>
+          <div id="dados vitais" style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', width: '100%' }}>
+            <input
+              title="GLASGOW"
+              autoComplete="off"
+              placeholder="GLASGOW"
+              className="input"
+              type="text"
+              maxLength={2}
+              id="inputGlasgow"
+              onFocus={(e) => (e.target.placeholder = '')}
+              onBlur={(e) => (e.target.placeholder = 'GLASGOW')}
+              defaultValue={paciente.glasgow}
+              onKeyUp={(e) => {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => {
+                  var x = e.target.value;
+                  if (isNaN(x) == false && x > 0 && x < 16) {
+                    obj.glasgow = e.target.value
+                  } else {
+                    document.getElementById("inputGlasgow").value = '';
+                    toast(settoast, 'DADO INCORRETO', 'rgb(231, 76, 60, 1)', 3000);
+                  }
+                }, 1000);
+              }}
+              style={{
+                marginTop: 10,
+                marginBottom: 10,
+                width: 100,
+                height: 50,
+              }}
+            ></input>
+            <input
+              title="PAS"
+              autoComplete="off"
+              placeholder="PAS"
+              className="input"
+              type="text"
+              maxLength={3}
+              id="inputPas"
+              onFocus={(e) => (e.target.placeholder = '')}
+              onBlur={(e) => (e.target.placeholder = 'PAS')}
+              defaultValue={paciente.pas}
+              onKeyUp={(e) => {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => {
+                  var x = e.target.value;
+                  if (isNaN(x) == false && x > 0 && x < 200) {
+                    obj.pas = e.target.value
+                  } else {
+                    document.getElementById("inputPas").value = '';
+                    toast(settoast, 'DADO INCORRETO', 'rgb(231, 76, 60, 1)', 3000);
+                  }
+                }, 1000);
+              }}
+              style={{
+                marginTop: 10,
+                marginBottom: 10,
+                width: 100,
+                height: 50,
+              }}
+            ></input>
+            <input
+              title="PAD"
+              autoComplete="off"
+              placeholder="PAD"
+              className="input"
+              type="text"
+              maxLength={3}
+              id="inputPad"
+              onFocus={(e) => (e.target.placeholder = '')}
+              onBlur={(e) => (e.target.placeholder = 'PAD')}
+              defaultValue={paciente.pad}
+              onKeyUp={(e) => {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => {
+                  var x = e.target.value;
+                  if (isNaN(x) == false && x > 0 && x < 200) {
+                    obj.pad = e.target.value
+                  } else {
+                    document.getElementById("inputPad").value = '';
+                    toast(settoast, 'DADO INCORRETO', 'rgb(231, 76, 60, 1)', 3000);
+                  }
+                }, 1000);
+              }}
+              style={{
+                marginTop: 10,
+                marginBottom: 10,
+                width: 100,
+                height: 50,
+              }}
+            ></input>
+            <input
+              title="FC"
+              autoComplete="off"
+              placeholder="FC"
+              className="input"
+              type="text"
+              maxLength={2}
+              id="inputFc"
+              onFocus={(e) => (e.target.placeholder = '')}
+              onBlur={(e) => (e.target.placeholder = 'FC')}
+              defaultValue={paciente.fc}
+              onKeyUp={(e) => {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => {
+                  var x = e.target.value;
+                  if (isNaN(x) == false && x > 0 && x < 250) {
+                    obj.fc = e.target.value
+                  } else {
+                    document.getElementById("inputFc").value = '';
+                    toast(settoast, 'DADO INCORRETO', 'rgb(231, 76, 60, 1)', 3000);
+                  }
+                }, 1000);
+              }}
+              style={{
+                marginTop: 10,
+                marginBottom: 10,
+                width: 100,
+                height: 50,
+              }}
+            ></input>
+            <input
+              title="FR"
+              autoComplete="off"
+              placeholder="FR"
+              className="input"
+              type="text"
+              maxLength={2}
+              id="inputFr"
+              onFocus={(e) => (e.target.placeholder = '')}
+              onBlur={(e) => (e.target.placeholder = 'FR')}
+              defaultValue={paciente.fr}
+              onKeyUp={(e) => {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => {
+                  var x = e.target.value;
+                  if (isNaN(x) == false && x > 0 && x < 40) {
+                    obj.fr = e.target.value
+                  } else {
+                    document.getElementById("inputFr").value = '';
+                    toast(settoast, 'DADO INCORRETO', 'rgb(231, 76, 60, 1)', 3000);
+                  }
+                }, 1000);
+              }}
+              style={{
+                marginTop: 10,
+                marginBottom: 10,
+                width: 100,
+                height: 50,
+              }}
+            ></input>
+            <input
+              title="SAO2"
+              autoComplete="off"
+              placeholder="SAO2"
+              className="input"
+              type="text"
+              maxLength={3}
+              id="inputSao2"
+              onFocus={(e) => (e.target.placeholder = '')}
+              onBlur={(e) => (e.target.placeholder = 'SAO2')}
+              defaultValue={paciente.sao2}
+              onKeyUp={(e) => {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => {
+                  var x = e.target.value;
+                  if (isNaN(x) == false && x > 0 && x < 101) {
+                    obj.sao2 = e.target.value
+                  } else {
+                    document.getElementById("inputFr").value = '';
+                    toast(settoast, 'DADO INCORRETO', 'rgb(231, 76, 60, 1)', 3000);
+                  }
+                }, 1000);
+              }}
+              style={{
+                marginTop: 10,
+                marginBottom: 10,
+                width: 100,
+                height: 50,
+              }}
+            ></input>
+          </div>
+          <div className="text1" style={{ width: '100%' }}>SUPLEMENTAÇÃO DE O2</div>
+          <div id="suplementao2"
+            style={{ width: '100%', display: 'flex', flexDirection: 'row', justifyContent: 'center' }}>
+            {suplementacaoO2.map(item => (
+              <div
+                key={'suplementacaoO2' + item}
+                className={paciente.ofertao2 == item ? "button-yellow" : "button"}
+                id={"suplementacaoO2" + item}
+                style={{ width: '10vw' }}
+                onClick={() => {
+                  var botoes = document.getElementById("suplementao2").getElementsByClassName("button-yellow");
+                  for (var i = 0; i < botoes.length; i++) {
+                    botoes.item(i).className = "button";
+                  }
+                  document.getElementById('suplementacaoO2' + item).className = "button-yellow";
+                  obj.ofertao2 = item;
+                }}
+              >
+                {item}
+              </div>
+            ))}
+          </div>
           <textarea
             className="textarea"
-            placeholder='RESUMO DO CASO E DADOS VITAIS'
+            placeholder='RESUMO DO CASO'
             onFocus={(e) => (e.target.placeholder = '')}
-            onBlur={(e) => (e.target.placeholder = 'RESUMO DO CASO E DADOS VITAIS')}
+            onBlur={(e) => (e.target.placeholder = 'RESUMO DO CASO')}
             onKeyUp={(e) => {
-              var timeout = null;
               clearTimeout(timeout);
               var dados = e.target.value;
-              timeout = setTimeout(() => obj.dados_susfacil = dados, 2000);
+              timeout = setTimeout(() => {
+                obj.dados_susfacil = dados;
+              }, 2000);
               e.stopPropagation()
             }}
-            style={{ display: 'flex', flexDirection: 'center', width: 'calc(60vw + 20px)' }}
-            id="inputDados"
-            title="INFORME AQUI UM BREVE RESUMO DO CASO, DADOS VITAIS E OFERTA DE O2 SUPLEMENTAR."
+            style={{ display: 'flex', flexDirection: 'center', width: 'calc(60vw + 20px)', marginTop: 20 }}
+            id="inputResumo"
+            title="INFORME AQUI UM BREVE RESUMO DO CASO."
             defaultValue={paciente.dados_susfacil}
           >
           </textarea>
@@ -541,9 +803,18 @@ function Pacientes() {
         style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}
       >
         <div id={"conteudo" + item.id} className="hide" style={{ width: '100%', justifyContent: 'space-between' }}>
-          <div id={"DADOS CLÍNICOS" + item.id} className="card" style={{ width: '100%', height: 'calc(50vh - 20px)' }}>
-            <div className="text2">DADOS CLÍNICOS DO PACIENTE E DO TRANSPORTE</div>
-            <div className="textarea"
+          <div id={"DADOS CLÍNICOS" + item.id} className="card" style={{ width: '40vw', height: 'calc(50vh - 20px)' }}>
+            <div className="text2">DADOS CLÍNICOS DO PACIENTE</div>
+            <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center' }}>
+              <div className='text1' style={{ margin: 0 }}>{'GLASGOW: ' + item.glasgow}</div>
+              <div className='text1' style={{ margin: 0 }}>{'PAS: ' + item.pas + ' MMHG'}</div>
+              <div className='text1' style={{ margin: 0 }}>{'PAD: ' + item.pad + ' MMHG'}</div>
+              <div className='text1' style={{ margin: 0 }}>{'FC: ' + item.fc + ' BPM'}</div>
+              <div className='text1' style={{ margin: 0 }}>{'FR: ' + item.fr + ' IRPM'}</div>
+              <div className='text1' style={{ margin: 0 }}>{'SAO2: ' + item.sao2 + '%'}</div>
+              <div className='text1' style={{ margin: 0 }}>{'OFERTA DE O2: ' + item.ofertao2}</div>
+            </div>
+            <div className="scroll text1"
               style={{
                 whiteSpace: 'pre-wrap', textAlign: 'center', height: '100%'
               }}>
@@ -552,10 +823,12 @@ function Pacientes() {
           </div>
           <div id="cancelamento de AIH"
             style={{
-              display: item.status == 'AGUARDANDO VAGA' ? 'flex' : 'none', flexDirection: 'row', justifyContent: 'center', width: '100%',
-              alignSelf: 'center',
+              display: item.status == 'AGUARDANDO VAGA' ? 'flex' : 'none',
+              flexDirection: 'column', justifyContent: 'center',
+              alignSelf: 'center', alignItems: 'center', alignContent: 'center',
+              width: '50vw',
             }}>
-            <div className='button-red' style={{ width: 200, minWidth: 200, height: 50 }}
+            <div className='button-red' style={{ width: 200, height: 50, alignSelf: 'center' }}
               onClick={justificativa == 1 ? () => setjustificativa(0) : () => setjustificativa(1)}
             >
               CANCELAR AIH
@@ -568,19 +841,20 @@ function Pacientes() {
               onKeyUp={(e) => {
                 clearTimeout(timeout);
                 timeout = setTimeout(() => {
-                  makeObj(item);
-                  obj.status = 'AIH CANCELADA PELA ORIGEM'
-                  obj.dados_susfacil = obj.dados_susfacil + '\n### AIH CANCELADA ###\n' + e.target.value;
+                  loadObj(item);
+                  obj.status = 'AIH CANCELADA NA ORIGEM'
+                  obj.dados_susfacil = obj.dados_susfacil + '\n' + moment().format('DD/MM/YYYY - HH:mm') + '\n### AIH CANCELADA NA ORIGEM ###\n' + e.target.value;
                   updatePaciente(item.id, 'sim');
                 }, 2000);
                 e.stopPropagation()
               }}
               style={{
-                display: justificativa == 1 ? 'flex' : 'none', flexDirection: 'center',
-                width: '100%',
+                display: justificativa == 1 ? 'flex' : 'none',
+                flexDirection: 'center', alignSelf: 'center',
+                width: '30vw', marginTop: 20,
                 whiteSpace: 'pre-wrap'
               }}
-              id="inputDados"
+              id="inputJustificativaCancelamentoOrigem"
               title="JUSTIFIQUE AQUI O CANCELAMENTO DA AIH."
             >
             </textarea>
@@ -594,7 +868,7 @@ function Pacientes() {
             <div id="botões de checagem"
               style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', width: '100%' }}
               onMouseLeave={() => {
-                makeObj(item);
+                loadObj(item);
                 obj.indicador_relatorio = relatorio;
                 obj.exames_ok = exames;
                 obj.aih_ok = aih;
@@ -646,19 +920,23 @@ function Pacientes() {
               width: '100%', marginLeft: 10,
               borderRadius: 5,
             }}>
-            <div className="text1">{'SOLICITAÇÃO DE TRANSPORTE REALIZADA COM SUCESSO!'}</div>
-            <div className="text1" style={{ color: 'rgb(82, 190, 128, 1)' }}>
-              {'PROTOCOLO: ' + transportes.filter(valor => valor.aih == item.aih && valor.status == 'TRANSPORTE SOLICITADO').map(valor => valor.protocolo)}
-            </div>
-            <div className="text1">
-              {'DATA E HORA DA SOLICITAÇÃO: ' + transportes.filter(valor => valor.aih == item.aih && valor.status == 'TRANSPORTE SOLICITADO').map(valor => moment(valor.data_pedido).format('DD/MM/YYYY - HH:mm'))}
+            <div style={{ display: justificativa == 1 ? 'none' : 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+              <div className="text1">{'SOLICITAÇÃO DE TRANSPORTE REALIZADA COM SUCESSO!'}</div>
+              <div className="text1" style={{ color: 'rgb(82, 190, 128, 1)' }}>
+                {'PROTOCOLO: ' + transportes.filter(valor => valor.aih == item.aih && valor.status == 'TRANSPORTE SOLICITADO').map(valor => valor.protocolo)}
+              </div>
+              <div className="text1">
+                {'DATA E HORA DA SOLICITAÇÃO: ' + transportes.filter(valor => valor.aih == item.aih && valor.status == 'TRANSPORTE SOLICITADO').map(valor => moment(valor.data_pedido).format('DD/MM/YYYY - HH:mm'))}
+              </div>
             </div>
             <div id="cancelamento de empenho"
               style={{
-                display: 'flex', flexDirection: 'row', justifyContent: 'center', width: '100%',
-                alignSelf: 'center',
+                display: 'flex',
+                flexDirection: 'column', justifyContent: 'center',
+                alignSelf: 'center', alignItems: 'center', alignContent: 'center',
+                width: '30vw',
               }}>
-              <div className='button-red' style={{ width: 200, minWidth: 200, height: 50 }}
+              <div className='button-red' style={{ width: 200, minWidth: 200, height: 50, alignSelf: 'center' }}
                 onClick={justificativa == 1 ? () => setjustificativa(0) : () => setjustificativa(1)}
               >
                 CANCELAR SOLICITAÇÃO DE TRANSPORTE
@@ -671,8 +949,9 @@ function Pacientes() {
                 onKeyUp={(e) => {
                   clearTimeout(timeout);
                   timeout = setTimeout(() => {
-                    makeObj(item);
-                    obj.status = 'TRANSPORTE CANCELADO PELA ORIGEM'
+                    loadObj(item);
+                    obj.status = 'TRANSPORTE CANCELADO';
+                    obj.dados_susfacil = obj.dados_susfacil + '\n' + moment().format('DD/MM/YYYY - HH:mm') + '\n### TRANSPORTE CANCELADO NA ORIGEM ###\n' + e.target.value;
                     updatePaciente(item.id, 'sim');
                     var justificativa = e.target.value;
                     updateTransporte(item.aih, justificativa);
@@ -681,10 +960,10 @@ function Pacientes() {
                 }}
                 style={{
                   display: justificativa == 1 ? 'flex' : 'none', flexDirection: 'center',
-                  width: '100%',
+                  width: '100%', height: 100, marginTop: 20,
                   whiteSpace: 'pre-wrap'
                 }}
-                id="inputDados"
+                id="inputJustificativaCancelamentoTransporte"
                 title="JUSTIFIQUE AQUI O CANCELAMENTO DO TRANSPORTE."
                 defaultValue={transportes.filter(valor => valor.aih == item.aih && valor.status == 'TRANSPORTE CANCELADO PELA ORIGEM').map(valor => valor.justificativa_recusa)}
               >
@@ -782,7 +1061,18 @@ function Pacientes() {
       indicador_chegada_destino: paciente.indicador_chegada_destino,
       dados_susfacil: paciente.dados_susfacil,
       exames_ok: pacientes.exames_ok,
-      aih_ok: pacientes.aih_ok
+      aih_ok: paciente.aih_ok,
+      glasgow: paciente.glasgow,
+      pas: paciente.pas,
+      pad: paciente.pad,
+      fc: paciente.fc,
+      fr: paciente.fr,
+      sao2: paciente.sao2,
+      ofertao2: paciente.ofertao2,
+      tipo_leito: paciente.tipo_leito,
+      contato_nome: paciente.contato_nome,
+      contato_telefone: paciente.contato_telefone,
+      leito_destino: paciente.leito_destino
     }
     axios.post(html + 'update_paciente/' + paciente.id, obj2).then(() => {
       axios.get(html + 'list_pacientes').then((response) => {
@@ -816,48 +1106,141 @@ function Pacientes() {
         style={{ display: viewdestinoselector > 0 ? 'flex' : 'none' }}
         onClick={() => setviewdestinoselector(0)}
       >
-        <div className="janela" style={{ position: 'relative', flexDirection: 'column', justifyContent: 'space-between', flexWrap: 'wrap', margin: 50 }}
+        <div className="janela"
+          style={{
+            position: 'relative',
+            display: 'flex', flexDirection: 'column', justifyContent: 'center',
+            height: '80vh'
+          }}
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="text1" style={{ color: 'rgb(82, 190, 128, 1' }}>VAGA LIBERADA!</div>
-          <div className="text1">SELECIONE A UNIDADE DE DESTINO</div>
-          <div id="lista de unidades" className="scroll" style={{ width: '30vw', height: '30vh', margin: 0, padding: 0, paddingRight: 5 }}>
-            {unidades.map((item) => (
-              <div id={'unidade' + item.id} key={item.id} className="button"
-                onClick={() => {
-                  var botoes = document.getElementById("lista de unidades").getElementsByClassName("button-red");
-                  for (var i = 0; i < botoes.length; i++) {
-                    botoes.item(i).className = "button";
-                  }
-                  document.getElementById('unidade' + item.id).className = "button-red";
-                  makeObj(paciente);
-                  obj.unidade_destino = item.unidade;
+          <div className='scroll'>
+            <div className="text1" style={{ color: 'rgb(82, 190, 128, 1' }}>VAGA LIBERADA!</div>
+            <div className="text1">SELECIONE A UNIDADE DE DESTINO</div>
+            <div id="lista de unidades"
+
+              className="scroll"
+              style={{
+                height: '200 !important', minHeight: 200,
+                width: '40vw', margin: 10, marginTop: 0,
+                backgroundColor: "#ffffff", borderColor: '#ffffff',
+              }}>
+              {unidades.map((item) => (
+                <div id={'unidade' + item.id} key={item.id} className="button"
+                  onClick={() => {
+                    var botoes = document.getElementById("lista de unidades").getElementsByClassName("button-red");
+                    for (var i = 0; i < botoes.length; i++) {
+                      botoes.item(i).className = "button";
+                    }
+                    document.getElementById('unidade' + item.id).className = "button-red";
+                    loadObj(paciente);
+                    obj.unidade_destino = item.unidade;
+                  }}
+                >
+                  {item.unidade}
+                </div>
+              ))}
+
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', flexWrap: 'wrap', width: '50vw' }}>
+              <input
+                autoComplete="off"
+                placeholder="SETOR"
+                className="input"
+                id="inputSetorDestino"
+                onFocus={(e) => (e.target.placeholder = '')}
+                onBlur={(e) => (e.target.placeholder = 'SETOR')}
+                onChange={(e) => (obj.setor_destino = e.target.value)}
+                defaultValue={paciente.setor_destino}
+                type="text"
+                style={{
+                  marginTop: 10,
+                  marginBottom: 10,
+                  width: '25vw',
+                  height: 50,
                 }}
+              ></input>
+              <input
+                autoComplete="off"
+                placeholder="LEITO"
+                className="input"
+                id="inputLeitoDestino"
+                onFocus={(e) => (e.target.placeholder = '')}
+                onBlur={(e) => (e.target.placeholder = 'LEITO')}
+                onChange={(e) => (obj.leito_destino = e.target.value)}
+                defaultValue={paciente.leito_destino}
+                type="text"
+                style={{
+                  marginTop: 10,
+                  marginBottom: 10,
+                  width: 100,
+                  height: 50,
+                }}
+              ></input>
+              <input
+                autoComplete="off"
+                placeholder="NOME DO CONTATO"
+                className="input"
+                id="inputContatoNome"
+                onFocus={(e) => (e.target.placeholder = '')}
+                onBlur={(e) => (e.target.placeholder = 'NOME DO CONTATO')}
+                onChange={(e) => (obj.contato_nome = e.target.value)}
+                defaultValue={paciente.contato_nome}
+                type="text"
+                style={{
+                  marginTop: 10,
+                  marginBottom: 10,
+                  width: '100%',
+                  height: 50,
+                }}
+              ></input>
+              <input
+                autoComplete="off"
+                placeholder="TELEFONE DO CONTATO"
+                className="input"
+                id="inputContatoTelefone"
+                onFocus={(e) => (e.target.placeholder = '')}
+                onBlur={(e) => (e.target.placeholder = 'TELEFONE DO CONTATO')}
+                onChange={(e) => (obj.contato_telefone = e.target.value)}
+                defaultValue={paciente.contato_telefone}
+                type="text"
+                style={{
+                  marginTop: 10,
+                  marginBottom: 10,
+                  width: '100%',
+                  height: 50,
+                }}
+              ></input>
+              <textarea
+                className="textarea"
+                placeholder='DEMAIS OBSERVAÇÕES.'
+                onFocus={(e) => (e.target.placeholder = '')}
+                onBlur={(e) => (e.target.placeholder = 'SETOR DE DESTINO, NOME DO PROFISSIONAL QUE LIBEROU A VAGA E DEMAIS OBSERVAÇÕES.')}
+                style={{ display: 'flex', flexDirection: 'center', width: '100%' }}
+                id="inputDadosVaga"
+                title="INFORME AQUI DEMAIS OBSERVAÇÕES."
               >
-                {item.unidade}
-              </div>
-            ))}
-          </div>
-          <textarea
-            className="textarea"
-            placeholder='SETOR DE DESTINO, NOME DO PROFISSIONAL QUE LIBEROU A VAGA E DEMAIS OBSERVAÇÕES.'
-            onFocus={(e) => (e.target.placeholder = '')}
-            onBlur={(e) => (e.target.placeholder = 'SETOR DE DESTINO, NOME DO PROFISSIONAL QUE LIBEROU A VAGA E DEMAIS OBSERVAÇÕES.')}
-            style={{ display: 'flex', flexDirection: 'center', width: '30vw', padding: 0, margin: 0, marginTop: 10, marginBottom: 20 }}
-            id="inputDadosVaga"
-            title="INFORME AQUI O SETOR DE DESTINO, NOME DO PROFISSIONAL QUE LIBEROU A VAGA E DEMAIS OBSERVAÇÕES."
-          >
-          </textarea>
-          <div className="button-green" style={{ width: 200 }}
-            onClick={() => {
-              obj.dados_susfacil = paciente.dados_susfacil + "\n## INFORMAÇÕES SOBRE A VAGA: ##\n" + document.getElementById("inputDadosVaga").value;
-              obj.indicador_data_confirmacao = moment();
-              obj.status = 'VAGA LIBERADA';
-              updatePaciente(paciente.id, 'sim');
-              setviewdestinoselector(0);
-            }}
-          >
-            CONFIRMAR
+              </textarea>
+            </div>
+            <div className="button-green" style={{ width: 200, alignSelf: 'center' }}
+              onClick={() => {
+                obj.setor_destino = document.getElementById("inputSetorDestino").value;
+                obj.leito_destino = document.getElementById("inputLeitoDestino").value;
+                obj.contato_nome = document.getElementById("inputContatoNome").value;
+                obj.contato_telefone = document.getElementById("inputContatoTelefone").value;
+                obj.indicador_data_confirmacao = moment();
+                obj.status = 'VAGA LIBERADA';
+                obj.dados_susfacil = paciente.dados_susfacil + "\n## INFORMAÇÕES SOBRE A VAGA ##" +
+                  "\nSETOR: " + obj.setor_destino + " - LEITO: " + obj.leito_destino +
+                  "\nNOME DO CONTATO: " + obj.contato_nome +
+                  "\nTELEFONE DO CONTATO: " + obj.contato_telefone +
+                  "\nOBS: " + document.getElementById("inputDadosVaga").value;
+                updatePaciente(paciente.id, 'sim');
+                setviewdestinoselector(0);
+              }}
+            >
+              CONFIRMAR
+            </div>
           </div>
         </div>
       </div>

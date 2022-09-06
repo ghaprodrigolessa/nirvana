@@ -55,7 +55,7 @@ function Login() {
             setpagina(1);
           }
         } else {
-          toast(settoast, 'USUÁRIO OU SENHA INCORRETOS', 'rgb(229, 126, 52, 1)', 3000);
+          toast(settoast, 'USUÁRIO OU SENHA INCORRETOS', 'rgb(231, 76, 60, 1)', 3000);
         }
       });
     }, 1000);
