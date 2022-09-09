@@ -63,7 +63,15 @@ function Login() {
 
   return (
     <div className="main cor3 fadein" style={{ display: pagina == 0 ? 'flex' : 'none' }}>
-      <div style={{ position: 'absolute', bottom: 10, right: 20, opacity: 0.4 }}>
+      <div
+        style={{
+          position: 'absolute',
+          bottom: 10,
+          right: 20,
+          left: 20,
+          opacity: 0.4,
+          display: 'flex', flexDirection: 'column', justifyContent: 'center',
+        }}>
         <img
           alt=""
           src={pbh}

@@ -12,7 +12,7 @@ function Modal() {
   return (
     <div className="fundo"
       style={{ display: dialogo.id !== 0 ? 'flex' : 'none' }}
-      onClick={() => setdialogo({ id: 0, mensagem: '', funcao: null })}
+      onClick={() => setdialogo({ id: 0, mensagem: '', funcao: null, parametros: [] })}
     >
       <div className="janela"
         onClick={(e) => e.stopPropagation()}
@@ -21,12 +21,12 @@ function Modal() {
         <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', margin: 10 }}>
           <div
             className="button-green" style={{ width: 200 }}
-            onClick={() => { dialogo.funcao(dialogo.id); setdialogo({ id: 0, mensagem: '', funcao: null }); }}
+            onClick={() => { dialogo.funcao(dialogo.parametros); setdialogo({ id: 0, mensagem: '', funcao: null, parametros: [] }); }}
           >
             CONFIRMAR
           </div>
           <div className="button-red" style={{ width: 200 }}
-            onClick={() => setdialogo({ id: 0, mensagem: '', funcao: null })}
+            onClick={() => setdialogo({ id: 0, mensagem: '', funcao: null, parametros: [] })}
           >
             CANCELAR
           </div>

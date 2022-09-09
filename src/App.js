@@ -4,9 +4,11 @@ import 'animate.css';
 import React, { useState } from 'react';
 import Context from './pages/Context';
 // páginas.
+import Login from './pages/Login';
 import Pacientes from './pages/Pacientes';
 import TransporteSanitario from './pages/TransporteSanitario';
-import Login from './pages/Login';
+import Motorista from './pages/Motorista';
+// componentes.
 import Toast from './components/Toast';
 import Modal from './components/Modal';
 
@@ -34,6 +36,7 @@ function App() {
         <Login></Login>
         <Pacientes></Pacientes>
         <TransporteSanitario></TransporteSanitario>
+        <Motorista></Motorista>
         <Toast></Toast>
         <Modal></Modal>
       </div>

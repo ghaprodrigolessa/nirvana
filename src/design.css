@@ -371,7 +371,8 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   border-radius: 5px;
 }
 
-::placeholder { /* Chrome, Firefox, Opera, Safari 10.1+ */
+::placeholder {
+  /* Chrome, Firefox, Opera, Safari 10.1+ */
   color: var(--placeholder);
   opacity: 0.5;
 }
@@ -571,51 +572,102 @@ ESTILOS VARIÁVEIS CONFORME A RESPONSIVIDADE.
 /* CELULARES */
 @media only screen and (max-width: 480px) {
   .text3 {
-    font-size: 10px;
+    font-size: 14px;
   }
-  .textarea,
-  .input,
-  .tex1,
-  .text2,
-  .button,
-  .button-green,
-  .button-red,
+  .textarea {
+    font-size: 12px;
+  }
+  .input {
+    font-size: 12px;
+  }
+  .text1 {
+    font-size: 12px;
+  }
+  .text2 {
+    font-size: 12px;
+  }
+  .button {
+    font-size: 12px;
+  }
+  .button-green {
+    font-size: 12px;
+  }
+  .button-red {
+    font-size: 12px;
+  }
+  .button-yellow {
+    font-size: 12px;
+  }
   .button-transparent {
-    font-size: 8px;
+    font-size: 12px;
   }
 }
 
 /* TABLETS */
 @media only screen and (min-width: 481px) and (max-width: 768px) {
   .text3 {
+    font-size: 14px;
+  }
+  .textarea {
     font-size: 12px;
   }
-  .textarea,
-  .input,
-  .text1,
-  .text2,
-  .button,
-  .button-green,
-  .button-red,
+  .input {
+    font-size: 12px;
+  }
+  .text1 {
+    font-size: 12px;
+  }
+  .text2 {
+    font-size: 12px;
+  }
+  .button {
+    font-size: 12px;
+  }
+  .button-green {
+    font-size: 12px;
+  }
+  .button-red {
+    font-size: 12px;
+  }
+  .button-yellow {
+    font-size: 12px;
+  }
   .button-transparent {
-    font-size: 8px;
+    font-size: 12px;
   }
 }
 
 /* LAPTOPS */
 @media only screen and (min-width: 769px) and (max-width: 1024px) {
   .text3 {
+    font-size: 16px;
+  }
+  .textarea {
     font-size: 14px;
   }
-  .textarea,
-  .input,
-  .text1,
-  .text2,
-  .button,
-  .button-green,
-  .button-red,
+  .input {
+    font-size: 14px;
+  }
+  .text1 {
+    font-size: 14px;
+  }
+  .text2 {
+    font-size: 14px;
+  }
+  .button {
+    font-size: 14px;
+  }
+  .button-green {
+    font-size: 14px;
+  }
+  .button-red {
+    font-size: 14px;
+  }
+  .button-yellow {
+    font-size: 14px;
+  }
   .button-transparent {
-    font-size: 10px;
+    font-size: 14px;
   }
 }
 
@@ -624,15 +676,32 @@ ESTILOS VARIÁVEIS CONFORME A RESPONSIVIDADE.
   .text3 {
     font-size: 16px;
   }
-  .input,
-  .textarea,
-  .text1,
-  .text2,
-  .button,
-  .button-green,
-  .button-red,
+  .textarea {
+    font-size: 14px;
+  }
+  .input {
+    font-size: 14px;
+  }
+  .text1 {
+    font-size: 14px;
+  }
+  .text2 {
+    font-size: 14px;
+  }
+  .button {
+    font-size: 14px;
+  }
+  .button-green {
+    font-size: 14px;
+  }
+  .button-red {
+    font-size: 14px;
+  }
+  .button-yellow {
+    font-size: 14px;
+  }
   .button-transparent {
-    font-size: 12px;
+    font-size: 14px;
   }
 }
 
@@ -641,14 +710,31 @@ ESTILOS VARIÁVEIS CONFORME A RESPONSIVIDADE.
   .text3 {
     font-size: 18px;
   }
-  .input,
-  .textarea,
-  .text1,
-  .text2,
-  .button,
-  .button-green,
-  .button-red,
+  .textarea {
+    font-size: 16px;
+  }
+  .input {
+    font-size: 16px;
+  }
+  .text1 {
+    font-size: 16px;
+  }
+  .text2 {
+    font-size: 16px;
+  }
+  .button {
+    font-size: 16px;
+  }
+  .button-green {
+    font-size: 16px;
+  }
+  .button-red {
+    font-size: 16px;
+  }
+  .button-yellow {
+    font-size: 16px;
+  }
   .button-transparent {
-    font-size: 14px;
+    font-size: 16px;
   }
 }

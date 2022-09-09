@@ -9,6 +9,7 @@ import modal from '../functions/modal';
 // imagens.
 import power from '../images/power.svg';
 import salvar from '../images/salvar.svg';
+import refresh from '../images/refresh.svg';
 import editar from '../images/editar.svg';
 import deletar from '../images/deletar.svg';
 import novo from '../images/novo.svg';
@@ -47,7 +48,7 @@ function Pacientes() {
     obj.unidade_origem = usuario.unidade;
     obj.setor_origem = null;
     obj.nome_paciente = document.getElementById("inputNome").value.toUpperCase();
-    obj.nome_mae = document.getElementById("inputNomeMae").value;
+    obj.nome_mae = document.getElementById("inputNomeMae").value.toUpperCase();
     obj.dn_paciente = moment(document.getElementById("inputDn").value, 'DD/MM/YYYY');
     obj.status = 'AGUARDANDO VAGA';
     obj.unidade_destino = null;
@@ -57,7 +58,7 @@ function Pacientes() {
     obj.indicador_solicitacao_transporte = null;
     obj.indicador_saida_origem = null;
     obj.indicador_chegada_destino = null;
-    obj.dados_susfacil = document.getElementById("inputResumo").value;
+    obj.dados_susfacil = document.getElementById("inputResumo").value.toUpperCase();
     obj.exames_ok = 0;
     obj.aih_ok = 0;
     obj.glasgow = document.getElementById("inputGlasgow").value;
@@ -149,38 +150,74 @@ function Pacientes() {
   }
 
   // atualizar registro de transportes.
-  const updateTransporte = (aih, justificativa) => {
-    var objeto = {};
-    transportes.filter(valor => valor.aih == aih && valor.status == 'TRANSPORTE SOLICITADO').map(valor => {
-      return (
-        objeto = {
-          id: valor.id,
-          aih: valor.aih,
-          protocolo: valor.protocolo,
-          id_ambulancia: valor.id_ambulancia,
-          finalidade: valor.finalidade,
-          data_pedido: valor.data_pedido,
-          unidade_destino: valor.unidade_destino,
-          setor_destino: valor.setor_destino,
-          status: 'TRANSPORTE CANCELADO',
-          justificativa_recusa: justificativa,
-        }
-      )
-    });
-    console.log('ID DO TRANSPORTE: ' + objeto.id);
-    axios.post(html + 'update_transporte/' + objeto.id, objeto).then(() => {
+  const updateTransporte = (aih, status, justificativa) => {
+    transportes.filter(valor => valor.aih == aih).map(valor =>
+      obj = {
+        id: valor.id,
+        aih: valor.aih,
+        protocolo: valor.protocolo,
+        id_ambulancia: valor.id_ambulancia,
+        finalidade: valor.finalidade,
+        data_pedido: valor.data_pedido,
+        unidade_destino: valor.unidade_destino,
+        setor_destino: valor.setor_destino,
+        status: status,
+        justificativa_recusa: justificativa,
+      }
+    )
+
+    console.log('ID DO TRANSPORTE: ' + obj.id);
+    console.log(obj);
+
+    axios.post(html + 'update_transporte/' + obj.id, obj).then(() => {
       toast(settoast, 'TRANSPORTE CANCELADO COM SUCESSO', 'rgb(82, 190, 128, 1)', 3000);
     });
   }
 
+  var interval = null;
+  var timeout = null;
   useEffect(() => {
     if (pagina == 1) {
       loadTransportes();
       loadPacientes();
       loadObj(paciente);
+      window.onmousemove = function () {
+        refreshData();
+      }
     }
+
     // eslint-disable-next-line
   }, [pagina])
+
+  // atualizando dados.
+  const refreshData = () => {
+    clearInterval(interval);
+    interval = setInterval(() => {
+      document.getElementById("refresh").style.display = 'flex';
+      setTimeout(() => {
+        loadPacientes();
+        loadTransportes();
+      }, 2000);
+    }, 30000);
+  }
+
+  function RefreshLogo() {
+    return (
+      <div
+        id="refresh"
+        style={{ display: 'none', position: 'absolute', right: 10, bottom: 10, backgroundColor: 'red', borderRadius: 50, opacity: 0.8 }}>
+        <img
+          alt=""
+          src={refresh}
+          style={{
+            margin: 5,
+            height: 15,
+            width: 15,
+          }}
+        ></img>
+      </div>
+    )
+  }
 
   // identificação do usuário.
   function Usuario() {
@@ -268,7 +305,10 @@ function Pacientes() {
   // lista de pacientes internados.
   const ListaDePacientes = useCallback(() => {
     return (
-      <div className='main' style={{ position: 'relative' }}>
+      <div
+        className='main'
+        style={{ position: 'relative' }}
+      >
         <div style={{
           display: 'flex', flexDirection: 'row', justifyContent: 'flex-end', alignContent: 'center',
           position: 'absolute', top: 10, right: 10,
@@ -290,7 +330,7 @@ function Pacientes() {
           </div>
         </div>
         <div className="text3">LISTA DE PACIENTES INTERNADOS</div>
-        <div className="header">
+        <div className="header" style={{ width: 'calc(100vw - 40px)', maxWidth: 'calc(100vw - 40px)' }}>
           <div className="button-transparent" style={{ width: '10vw', marginLeft: 70 }}>
             TIPO DE LEITO
           </div>
@@ -313,7 +353,7 @@ function Pacientes() {
             UNIDADE DE DESTINO
           </div>
         </div>
-        <div className="scroll" style={{ height: '70vh', display: arraypacientes.length > 0 ? 'flex' : 'none' }}>
+        <div className="scroll" style={{ width: 'calc(100vw - 40px)', maxWidth: 'calc(100vw - 40px)', height: '73vh', display: arraypacientes.length > 0 ? 'flex' : 'none' }}>
           {arraypacientes.filter(item => item.unidade_origem == usuario.unidade).sort((a, b) => moment(a.indicador_data_cadastro) < moment(b.indicador_data_cadastro) ? 1 : -1).map(item => (
             <div key={'pacientes' + item.id}>
               <div
@@ -369,14 +409,13 @@ function Pacientes() {
           ))}
         </div>
         <div className="text3" style={{ height: '70vh', display: arraypacientes.length > 0 ? 'none' : 'flex', color: 'rgb(82, 190, 128, 1)' }}>SEM PACIENTES INTERNADOS NA UNIDADE</div>
-      </div>
+      </div >
     )
     // eslint-disable-next-line
   }, [arraypacientes]);
 
   // componente para inserir ou atualizar um registro de paciente.
   const [vieweditpaciente, setvieweditpaciente] = useState(0);
-  var timeout = null;
   var suplementacaoO2 = ['CN 1-4L/MIN', 'MF 5-12L/MIN', 'VM']
   const EditPaciente = useCallback(() => {
     obj.tipo_leito = paciente.tipo_leito;
@@ -453,7 +492,7 @@ function Pacientes() {
                 title={'EXCLUIR'}
                 onClick={
                   (e) => {
-                    modal(setdialogo, paciente.id, 'CONFIRMAR EXCLUSÃO DO PACIENTE?', deletePaciente); e.stopPropagation();
+                    modal(setdialogo, paciente.id, 'CONFIRMAR EXCLUSÃO DO PACIENTE?', deletePaciente, paciente.id); e.stopPropagation();
                   }}
               >
                 <img
@@ -800,12 +839,22 @@ function Pacientes() {
       <div
         id={"controle" + item.id}
         className="retract"
-        style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}
+        style={{ flexDirection: 'row', justifyContent: 'space-between' }}
       >
-        <div id={"conteudo" + item.id} className="hide" style={{ width: '100%', justifyContent: 'space-between' }}>
-          <div id={"DADOS CLÍNICOS" + item.id} className="card" style={{ width: '40vw', height: 'calc(50vh - 20px)' }}>
+        <div id={"conteudo" + item.id} className="hide" style={{
+          justifyContent: 'space-between', width: '100%'
+        }}>
+          <div id={"DADOS CLÍNICOS" + item.id} className="card"
+            style={{
+              width: '100%',
+              height: 'calc(50vh - 20px)',
+              marginRight: item.status == 'AIH CANCELADA NA ORIGEM' || item.status == 'EM TRANSPORTE' ? 0 : 10,
+            }}>
             <div className="text2">DADOS CLÍNICOS DO PACIENTE</div>
-            <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center' }}>
+            <div style={{
+              display: 'flex', flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center',
+              width: '100%',
+            }}>
               <div className='text1' style={{ margin: 0 }}>{'GLASGOW: ' + item.glasgow}</div>
               <div className='text1' style={{ margin: 0 }}>{'PAS: ' + item.pas + ' MMHG'}</div>
               <div className='text1' style={{ margin: 0 }}>{'PAD: ' + item.pad + ' MMHG'}</div>
@@ -816,158 +865,253 @@ function Pacientes() {
             </div>
             <div className="scroll text1"
               style={{
-                whiteSpace: 'pre-wrap', textAlign: 'center', height: '100%'
+                whiteSpace: 'pre-wrap', justifyContent: 'flex-start',
+                textAlign: 'center',
+                height: 'calc(100% - 30px)', width: 'calc(100% - 30px)',
               }}>
               {item.dados_susfacil}
             </div>
           </div>
-          <div id="cancelamento de AIH"
-            style={{
-              display: item.status == 'AGUARDANDO VAGA' ? 'flex' : 'none',
-              flexDirection: 'column', justifyContent: 'center',
-              alignSelf: 'center', alignItems: 'center', alignContent: 'center',
-              width: '50vw',
-            }}>
-            <div className='button-red' style={{ width: 200, height: 50, alignSelf: 'center' }}
-              onClick={justificativa == 1 ? () => setjustificativa(0) : () => setjustificativa(1)}
-            >
-              CANCELAR AIH
-            </div>
-            <textarea
-              className="textarea"
-              placeholder='JUSTIFICATIVA PARA O CANCELAMENTO DA AIH'
-              onFocus={(e) => (e.target.placeholder = '')}
-              onBlur={(e) => (e.target.placeholder = 'JUSTIFICATIVA PARA O CANCELAMENTO DA AIH')}
-              onKeyUp={(e) => {
-                clearTimeout(timeout);
-                timeout = setTimeout(() => {
-                  loadObj(item);
-                  obj.status = 'AIH CANCELADA NA ORIGEM'
-                  obj.dados_susfacil = obj.dados_susfacil + '\n' + moment().format('DD/MM/YYYY - HH:mm') + '\n### AIH CANCELADA NA ORIGEM ###\n' + e.target.value;
-                  updatePaciente(item.id, 'sim');
-                }, 2000);
-                e.stopPropagation()
-              }}
+
+          <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+            <div id="cancelamento de AIH"
               style={{
-                display: justificativa == 1 ? 'flex' : 'none',
-                flexDirection: 'center', alignSelf: 'center',
-                width: '30vw', marginTop: 20,
-                whiteSpace: 'pre-wrap'
-              }}
-              id="inputJustificativaCancelamentoOrigem"
-              title="JUSTIFIQUE AQUI O CANCELAMENTO DA AIH."
-            >
-            </textarea>
-          </div>
-          <div id={"CHECAGEM E EMPENHO DE TRANSPORTE" + item.id}
-            style={{
-              display: item.status == 'VAGA LIBERADA' ? 'flex' : 'none',
-              flexDirection: 'column', alignSelf: 'center',
-              width: '100%', marginLeft: 10,
-            }}>
+                display: item.status == 'AGUARDANDO VAGA' || item.status == 'VAGA LIBERADA' || item.status == 'TRANSPORTE SOLICITADO' || item.status == 'TRANSPORTE CANCELADO' ? 'flex' : 'none',
+                flexDirection: 'column', justifyContent: 'center',
+                alignSelf: 'center', alignItems: 'center', alignContent: 'center',
+              }}>
+              <div className='button-red' style={{ width: 200, height: 50, alignSelf: 'center', opacity: justificativa == 1 ? 1 : 0.5 }}
+                onClick={justificativa == 1 ? () => setjustificativa(0) : () => setjustificativa(1)}
+              >
+                CANCELAR AIH
+              </div>
+              <div style={{ display: justificativa == 1 ? 'flex' : 'none', flexDirection: 'row', justifyContent: 'center', }}>
+                <div className='button'
+                  style={{ width: '14vw' }}
+                  onClick={() => {
+                    loadObj(item);
+                    obj.status = 'AIH CANCELADA NA ORIGEM'
+                    // eslint-disable-next-line
+                    obj.dados_susfacil = obj.dados_susfacil + '\n' + moment().format('DD/MM/YYYY - HH:mm') + '\n### AIH CANCELADA NA ORIGEM ###\n' + 'OBITO';
+                    updatePaciente(item.id, 'sim');
+                    // cancelar transporte, se já empenhado.
+                    if (transportes.filter(valor => valor.aih == item.aih).length > 0) {
+                      updateTransporte(item.aih, 'AIH CANCELADA NA ORIGEM', 'ÓBITO');
+                      toast(settoast, 'AIH CANCELADA', 'rgb(82, 190, 128, 1', 3000);
+                    }
+                  }}>
+                  ÓBITO
+                </div>
+                <div className='button'
+                  style={{ width: '14vw' }}
+                  onClick={() => {
+                    loadObj(item);
+                    obj.status = 'AIH CANCELADA NA ORIGEM'
+                    // eslint-disable-next-line
+                    obj.dados_susfacil = obj.dados_susfacil + '\n' + moment().format('DD/MM/YYYY - HH:mm') + '\n### AIH CANCELADA NA ORIGEM ###\n' + 'EVASÃO';
+                    updatePaciente(item.id, 'sim');
+                    // cancelar transporte, se já empenhado.
+                    if (transportes.filter(valor => valor.aih == item.aih)) {
+                      updateTransporte(item.aih, 'AIH CANCELADA NA ORIGEM', 'EVASÃO');
+                      toast(settoast, 'AIH CANCELADA', 'rgb(82, 190, 128, 1', 3000);
+                    }
+                  }}>
+                  EVASÃO
+                </div>
+                <div className='button'
+                  style={{ width: '14vw' }}
+                  onClick={() => {
+                    loadObj(item);
+                    obj.status = 'AIH CANCELADA NA ORIGEM'
+                    // eslint-disable-next-line
+                    obj.dados_susfacil = obj.dados_susfacil + '\n' + moment().format('DD/MM/YYYY - HH:mm') + '\n### AIH CANCELADA NA ORIGEM ###\n' + 'OBITO';
+                    updatePaciente(item.id, 'sim');
+                    // cancelar transporte, se já empenhado.
+                    if (transportes.filter(valor => valor.aih == item.aih).length > 0) {
+                      updateTransporte(item.aih, 'AIH CANCELADA NA ORIGEM', 'ALTA');
+                      toast(settoast, 'AIH CANCELADA', 'rgb(82, 190, 128, 1', 3000);
+                    }
+                  }}>
+                  ALTA
+                </div>
+              </div>
+              <textarea
+                className="textarea"
+                placeholder='JUSTIFICATIVA PARA O CANCELAMENTO DA AIH'
+                onFocus={(e) => (e.target.placeholder = '')}
+                onBlur={(e) => (e.target.placeholder = 'JUSTIFICATIVA PARA O CANCELAMENTO DA AIH')}
+                onKeyUp={(e) => {
+                  clearTimeout(timeout);
+                  timeout = setTimeout(() => {
+                    loadObj(item);
+                    obj.status = 'AIH CANCELADA NA ORIGEM'
+                    obj.dados_susfacil = obj.dados_susfacil + '\n' + moment().format('DD/MM/YYYY - HH:mm') + '\n### AIH CANCELADA NA ORIGEM ###\n' + e.target.value;
+                    updatePaciente(item.id, 'sim');
+                    // cancelar transporte, se já empenhado.
+                    if (transportes.filter(valor => valor.aih == item.aih).length > 0) {
+                      updateTransporte(item.aih, 'AIH CANCELADA NA ORIGEM', document.getElementById("inputJustificativaCancelamentoOrigem").value.toUpperCase());
+                      toast(settoast, 'AIH CANCELADA', 'rgb(82, 190, 128, 1', 3000);
+                    }
+                  }, 2000);
+                  e.stopPropagation()
+                }}
+                style={{
+                  display: justificativa == 1 ? 'flex' : 'none',
+                  flexDirection: 'center', alignSelf: 'center',
+                  width: '30vw', marginTop: 20,
+                  whiteSpace: 'pre-wrap'
+                }}
+                id="inputJustificativaCancelamentoOrigem"
+                title="JUSTIFIQUE AQUI O CANCELAMENTO DA AIH."
+              >
+              </textarea>
+            </div>
             <div id="botões de checagem"
-              style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', width: '100%' }}
-              onMouseLeave={() => {
-                loadObj(item);
-                obj.indicador_relatorio = relatorio;
-                obj.exames_ok = exames;
-                obj.aih_ok = aih;
-                updatePaciente(item.id, 'não');
+              style={{
+                display: justificativa == 0 && (item.status == 'VAGA LIBERADA' || item.status == 'TRANSPORTE CANCELADO') ? 'flex' : 'none',
+                flexDirection: 'row', justifyContent: 'center',
               }}
+            /*
+            onMouseLeave={() => {
+              loadObj(item);
+              obj.indicador_relatorio = relatorio;
+              obj.exames_ok = exames;
+              obj.aih_ok = aih;
+              updatePaciente(item.id, 'não');
+            }}
+            */
             >
               <div id="relatorio" className={relatorio == null ? 'button-red' : 'button-green'}
-                style={{ width: '14vw', height: '8vw' }}
-                onClick={relatorio == null ? () => setrelatorio(moment()) : () => setrelatorio(null)}
+                style={{ width: '14vw', height: 75 }}
+                onClick={relatorio == null ?
+                  () => {
+                    loadObj(item);
+                    obj.indicador_relatorio = moment();
+                    updatePaciente(item.id, 'não');
+                    setrelatorio(moment())
+                  } :
+                  () => {
+                    loadObj(item);
+                    obj.indicador_relatorio = null;
+                    updatePaciente(item.id, 'não');
+                    setrelatorio(null);
+                  }
+                }
               >
                 RELATÓRIO DE TRANSFERÊNCIA
               </div>
               <div id="exames" className={exames == 0 ? 'button-red' : 'button-green'}
-                style={{ width: '14vw', height: '8vw' }}
-                onClick={exames == 0 ? () => setexames(1) : () => setexames(0)}
+                style={{ width: '14vw', height: 75 }}
+                onClick={exames == 0 ?
+                  () => {
+                    loadObj(item);
+                    obj.exames_ok = 1;
+                    updatePaciente(item.id, 'não');
+                    setexames(1)
+                  } :
+                  () => {
+                    loadObj(item);
+                    obj.exames_ok = 0;
+                    updatePaciente(item.id, 'não');
+                    setexames(0);
+                  }
+                }
               >
                 EXAMES LABORATORIAIS
               </div>
               <div id="aih" className={aih == 0 ? 'button-red' : 'button-green'}
-                style={{ width: '14vw', height: '8vw' }}
-                onClick={aih == 0 ? () => setaih(1) : () => setaih(0)}
+                style={{ width: '14vw', height: 75 }}
+                onClick={aih == 0 ?
+                  () => {
+                    loadObj(item);
+                    obj.aih_ok = 1;
+                    updatePaciente(item.id, 'não');
+                    setaih(1)
+                  } :
+                  () => {
+                    loadObj(item);
+                    obj.aih_ok = 0;
+                    updatePaciente(item.id, 'não');
+                    setaih(0);
+                  }
+                }
               >
                 AIH CARIMBADA
               </div>
             </div>
             <div id="empenho de transporte"
               style={{
-                display: relatorio != null && exames == 1 && aih == 1 ? 'flex' : 'none',
-                flexDirection: 'row', justifyContent: 'center', width: '100%'
+                display: relatorio != null && exames == 1 && aih == 1 && (item.status == 'VAGA LIBERADA' || item.status == 'TRANSPORTE CANCELADO') && justificativa == 0 ? 'flex' : 'none',
+                flexDirection: 'row', justifyContent: 'center'
               }}>
-              <div className='button' style={{ width: '14vw', height: '8vw' }}
+              <div className='button' style={{ width: '14vw', height: 75 }}
                 onClick={() => setviewopcoestransportesanitario(1)}
               >
                 SOLICITAR TRANSPORTE SANITÁRIO
               </div>
-              <div className='button' style={{ width: '14vw', height: '8vw' }}>
+              <div className='button' style={{ width: '14vw', height: 75 }}>
                 AGENDAR TRANSPORTE SANITÁRIO
               </div>
-              <div className='button' style={{ width: '14vw', height: '8vw' }}>
+              <div className='button' style={{ width: '14vw', height: 75 }}>
                 SOLICITAR SAMU
               </div>
             </div>
-          </div>
-          <div id={"PROTOCOLO DE TRANSPORTE"}
-            className='card'
-            style={{
-              display: transportes.filter(valor => valor.aih == item.aih && valor.status == 'TRANSPORTE SOLICITADO').length > 0 ? 'flex' : 'none',
-              flexDirection: 'column', justifyContent: 'center',
-              width: '100%', marginLeft: 10,
-              borderRadius: 5,
-            }}>
-            <div style={{ display: justificativa == 1 ? 'none' : 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-              <div className="text1">{'SOLICITAÇÃO DE TRANSPORTE REALIZADA COM SUCESSO!'}</div>
-              <div className="text1" style={{ color: 'rgb(82, 190, 128, 1)' }}>
-                {'PROTOCOLO: ' + transportes.filter(valor => valor.aih == item.aih && valor.status == 'TRANSPORTE SOLICITADO').map(valor => valor.protocolo)}
-              </div>
-              <div className="text1">
-                {'DATA E HORA DA SOLICITAÇÃO: ' + transportes.filter(valor => valor.aih == item.aih && valor.status == 'TRANSPORTE SOLICITADO').map(valor => moment(valor.data_pedido).format('DD/MM/YYYY - HH:mm'))}
-              </div>
-            </div>
-            <div id="cancelamento de empenho"
+            <div id="protocolo de transporte"
+              className='card'
               style={{
-                display: 'flex',
+                display: item.status == 'TRANSPORTE SOLICITADO' || item.status == 'TRANSPORTE LIBERADO' ? 'flex' : 'none',
                 flexDirection: 'column', justifyContent: 'center',
-                alignSelf: 'center', alignItems: 'center', alignContent: 'center',
-                width: '30vw',
+                borderRadius: 5,
               }}>
-              <div className='button-red' style={{ width: 200, minWidth: 200, height: 50, alignSelf: 'center' }}
-                onClick={justificativa == 1 ? () => setjustificativa(0) : () => setjustificativa(1)}
-              >
-                CANCELAR SOLICITAÇÃO DE TRANSPORTE
+              <div style={{ display: justificativa == 1 ? 'none' : 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                <div className="text1">{'SOLICITAÇÃO DE TRANSPORTE REALIZADA COM SUCESSO!'}</div>
+                <div className="text1" style={{ color: 'rgb(82, 190, 128, 1)' }}>
+                  {'PROTOCOLO: ' + transportes.filter(valor => valor.aih == item.aih && valor.status == 'TRANSPORTE SOLICITADO').map(valor => valor.protocolo)}
+                </div>
+                <div className="text1">
+                  {'DATA E HORA DA SOLICITAÇÃO: ' + transportes.filter(valor => valor.aih == item.aih && valor.status == 'TRANSPORTE SOLICITADO').map(valor => moment(valor.data_pedido).format('DD/MM/YYYY - HH:mm'))}
+                </div>
               </div>
-              <textarea
-                className="textarea"
-                placeholder='JUSTIFICATIVA PARA O CANCELAMENTO DO TRANSPORTE'
-                onFocus={(e) => (e.target.placeholder = '')}
-                onBlur={(e) => (e.target.placeholder = 'JUSTIFICATIVA PARA O CANCELAMENTO DO TRANSPORTE')}
-                onKeyUp={(e) => {
-                  clearTimeout(timeout);
-                  timeout = setTimeout(() => {
-                    loadObj(item);
-                    obj.status = 'TRANSPORTE CANCELADO';
-                    obj.dados_susfacil = obj.dados_susfacil + '\n' + moment().format('DD/MM/YYYY - HH:mm') + '\n### TRANSPORTE CANCELADO NA ORIGEM ###\n' + e.target.value;
-                    updatePaciente(item.id, 'sim');
-                    var justificativa = e.target.value;
-                    updateTransporte(item.aih, justificativa);
-                  }, 2000);
-                  e.stopPropagation()
-                }}
+              <div id="cancelamento de empenho"
                 style={{
-                  display: justificativa == 1 ? 'flex' : 'none', flexDirection: 'center',
-                  width: '100%', height: 100, marginTop: 20,
-                  whiteSpace: 'pre-wrap'
-                }}
-                id="inputJustificativaCancelamentoTransporte"
-                title="JUSTIFIQUE AQUI O CANCELAMENTO DO TRANSPORTE."
-                defaultValue={transportes.filter(valor => valor.aih == item.aih && valor.status == 'TRANSPORTE CANCELADO PELA ORIGEM').map(valor => valor.justificativa_recusa)}
-              >
-              </textarea>
+                  display: 'flex',
+                  flexDirection: 'column', justifyContent: 'center',
+                  alignSelf: 'center', alignItems: 'center', alignContent: 'center',
+                }}>
+                <div className='button-red'
+                  style={{ width: 200, minWidth: 200, height: 50, alignSelf: 'center', opacity: justificativa == 1 ? 1 : 0.5 }}
+                  onClick={justificativa == 1 ? () => setjustificativa(0) : () => setjustificativa(1)}
+                >
+                  CANCELAR SOLICITAÇÃO DE TRANSPORTE
+                </div>
+                <textarea
+                  className="textarea"
+                  placeholder='JUSTIFICATIVA PARA O CANCELAMENTO DO TRANSPORTE'
+                  onFocus={(e) => (e.target.placeholder = '')}
+                  onBlur={(e) => (e.target.placeholder = 'JUSTIFICATIVA PARA O CANCELAMENTO DO TRANSPORTE')}
+                  onKeyUp={(e) => {
+                    clearTimeout(timeout);
+                    timeout = setTimeout(() => {
+                      loadObj(item);
+                      obj.status = 'TRANSPORTE CANCELADO';
+                      obj.dados_susfacil = obj.dados_susfacil + '\n' + moment().format('DD/MM/YYYY - HH:mm') + '\n### TRANSPORTE CANCELADO NA ORIGEM ###\n' + e.target.value;
+                      updatePaciente(item.id, 'sim');
+                      var justificativa = e.target.value;
+                      updateTransporte(item.aih, 'TRANSPORTE CANCELADO', justificativa);
+                    }, 2000);
+                    e.stopPropagation();
+                  }}
+                  style={{
+                    display: justificativa == 1 ? 'flex' : 'none', flexDirection: 'center',
+                    marginTop: 20,
+                    whiteSpace: 'pre-wrap', width: '30vw'
+                  }}
+                  id="inputJustificativaCancelamentoTransporte"
+                  title="JUSTIFIQUE AQUI O CANCELAMENTO DO TRANSPORTE."
+                  defaultValue={transportes.filter(valor => valor.aih == item.aih && valor.status == 'TRANSPORTE CANCELADO PELA ORIGEM').map(valor => valor.justificativa_recusa)}
+                >
+                </textarea>
+              </div>
             </div>
           </div>
         </div>
@@ -1254,6 +1398,7 @@ function Pacientes() {
       <EditPaciente></EditPaciente>
       <OpcoesTransporteSanitario></OpcoesTransporteSanitario>
       <DestinoSelector></DestinoSelector>
+      <RefreshLogo></RefreshLogo>
     </div>
   );
 }
