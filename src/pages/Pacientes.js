@@ -2,7 +2,7 @@
 import React, { useContext, useEffect, useCallback, useState } from 'react';
 import axios from 'axios';
 import Context from './Context';
-import moment from 'moment';
+import moment, { isMoment } from 'moment';
 // funções.
 import toast from '../functions/toast';
 import modal from '../functions/modal';
@@ -182,7 +182,7 @@ function Pacientes() {
       loadPacientes();
       loadObj(paciente);
       window.onmousemove = function () {
-        refreshData();
+        // refreshData();
       }
     }
 
@@ -330,34 +330,58 @@ function Pacientes() {
           </div>
         </div>
         <div className="text3">LISTA DE PACIENTES INTERNADOS</div>
-        <div className="header" style={{ width: 'calc(100vw - 40px)', maxWidth: 'calc(100vw - 40px)' }}>
-          <div className="button-transparent" style={{ width: '10vw', marginLeft: 70 }}>
-            TIPO DE LEITO
-          </div>
-          <div className="button-transparent" style={{ width: '10vw' }}>
-            AIH
-          </div>
-          <div className="button-transparent" style={{ width: '10vw' }}>
-            DATA DE CADASTRO
-          </div>
-          <div className="button-transparent" style={{
-            width: window.innerWidth > 1200 ? '25vw' : '10vw',
-            display: window.innerWidth > 750 ? 'flex' : 'none',
+        <div className="header-scroll"
+          style={{
+            width: 'calc(100vw - 40px)', maxWidth: 'calc(100vw - 40px)',
+            display: arraypacientes.length > 0 ? 'flex' : 'none',
           }}>
-            NOME DO PACIENTE
-          </div>
-          <div className="button-transparent" style={{ width: '15vw' }}>
-            STATUS
-          </div>
-          <div className="button-transparent" style={{ width: '10vw' }}>
-            UNIDADE DE DESTINO
+          <div className='header-row' style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+            <div className="button-transparent" style={{ width: 50 }}
+              onClick={() => setvieweditpaciente(2)}
+            >
+            </div>
+            <div className="button-transparent" style={{ width: '10vw' }}>
+              TIPO DE LEITO
+            </div>
+            <div className="button-transparent" style={{ width: '10vw' }}>
+              AIH
+            </div>
+            <div className="button-transparent" style={{ width: '10vw' }}>
+              DATA DE ENTRADA
+            </div>
+            <div className="button-transparent"
+              style={{
+                width: window.innerWidth > 1200 ? '25vw' : '15vw',
+                display: window.innerWidth > 750 ? 'flex' : 'none',
+              }}>
+              NOME
+            </div>
+            <div className={"button-transparent"}
+              style={{ width: '15vw' }}>
+              STATUS
+            </div>
+            <div className={"button-transparent"}
+              style={{ width: '10vw' }}
+            >
+              DESTINO
+            </div>
           </div>
         </div>
+
         <div className="scroll" style={{ width: 'calc(100vw - 40px)', maxWidth: 'calc(100vw - 40px)', height: '73vh', display: arraypacientes.length > 0 ? 'flex' : 'none' }}>
           {arraypacientes.filter(item => item.unidade_origem == usuario.unidade).sort((a, b) => moment(a.indicador_data_cadastro) < moment(b.indicador_data_cadastro) ? 1 : -1).map(item => (
             <div key={'pacientes' + item.id}>
               <div
                 className="row"
+                style={{
+                  // classificando registros por cores, conforme o tempo de internação na upa.
+                  backgroundColor:
+                    moment().diff(moment(item.indicador_data_cadastro), 'days') > 4 ? 'rgb(229, 126, 52, 0.5)' :
+                      moment().diff(moment(item.indicador_data_cadastro), 'days') < 5 && moment().diff(moment(item.indicador_data_cadastro), 'days') > 2 ? 'rgb(229, 126, 52, 0.5' :
+                        'rgb(82, 190, 128, 0.5)',
+                  borderRadius: 5,
+                  justifyContent: 'space-between',
+                }}
                 onClick={() => {
                   setpaciente(item);
                   document.getElementById("controle" + item.id).classList.toggle("expand");
@@ -414,12 +438,42 @@ function Pacientes() {
     // eslint-disable-next-line
   }, [arraypacientes]);
 
+  // função para destacar campo obrigatório em branco.
+  const checkEmptyInput = (id, mensagem, botao) => {
+    if (document.getElementById(id).value == '') {
+      document.getElementById(id).style.backgroundColor = 'rgb(231, 76, 60, 0.3)';
+      document.getElementById(botao).style.opacity = 0.3;
+      document.getElementById(botao).style.pointerEvents = 'none';
+      setTimeout(() => {
+        document.getElementById(botao).style.pointerEvents = 'auto';
+        document.getElementById(botao).style.opacity = 1;
+      }, 3000);
+      toast(settoast, mensagem, 'rgb(231, 76, 60, 1)', 3000);
+    } else {
+      document.getElementById(id).style.backgroundColor = 'white';
+    }
+  }
+
   // componente para inserir ou atualizar um registro de paciente.
   const [vieweditpaciente, setvieweditpaciente] = useState(0);
   var suplementacaoO2 = ['CN 1-4L/MIN', 'MF 5-12L/MIN', 'VM']
   const EditPaciente = useCallback(() => {
-    obj.tipo_leito = paciente.tipo_leito;
-    obj.ofertao2 = paciente.ofertao2;
+    // recuperando informações no caso de edição do registro de paciente.
+    const [leito, setleito] = useState(paciente.tipo_leito);
+    const [aih, setaih] = useState(paciente.aih);
+    const [procedimento, setprocedimento] = useState(paciente.procedimento);
+    const [nomepaciente, setnomepaciente] = useState(paciente.nome_paciente);
+    const [dn, setdn] = useState(paciente.dn_paciente);
+    const [nomemae, setnomemae] = useState(paciente.nome_mae);
+    const [glasgow, setglasgow] = useState(paciente.glasgow);
+    const [pas, setpas] = useState(paciente.pas);
+    const [pad, setpad] = useState(paciente.pad);
+    const [fc, setfc] = useState(paciente.fc);
+    const [fr, setfr] = useState(paciente.fr);
+    const [sao2, setsao2] = useState(paciente.sao2);
+    const [ofertao2, setofertao2] = useState(paciente.ofertao2);
+    const [resumo, setresumo] = useState(paciente.dados_susfacil);
+
     return (
       <div className="fundo"
         style={{ display: vieweditpaciente > 0 ? 'flex' : 'none' }}
@@ -428,402 +482,522 @@ function Pacientes() {
         <div className="janela" style={{
           position: 'relative',
           display: 'flex', flexDirection: 'row', justifyContent: 'space-between',
-          flexWrap: 'wrap', margin: 50, width: '65vw', alignItems: 'center',
+          flexWrap: 'wrap', margin: 50, width: '70vw', alignItems: 'center',
         }}
           onClick={(e) => e.stopPropagation()}
         >
-          <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', width: '100%' }}>
-            <div id="selectcti" className={paciente.tipo_leito == 'CTI' ? 'button-yellow' : 'button'} style={{ width: 100, height: 50 }}
-              onClick={() => {
-                document.getElementById("selectenf").className = "button";
-                document.getElementById("selectcti").className = "button-yellow";
-                obj.tipo_leito = 'CTI';
-              }}
-            >
-              CTI
-            </div>
-            <div id="selectenf" className={paciente.tipo_leito == 'ENFERMARIA' ? 'button-yellow' : 'button'} style={{ width: 100, height: 50 }}
-              onClick={() => {
-                document.getElementById("selectenf").className = "button-yellow";
-                document.getElementById("selectcti").className = "button";
-                obj.tipo_leito = 'ENFERMARIA';
-              }}
-            >
-              ENFERMARIA
-            </div>
-            <input
-              autoComplete="off"
-              placeholder="AIH"
-              className="input"
-              id="inputAih"
-              onFocus={(e) => (e.target.placeholder = '')}
-              onBlur={(e) => (e.target.placeholder = 'AIH')}
-              onChange={(e) => (obj.aih = e.target.value)}
-              defaultValue={paciente.aih}
-              type="number"
-              maxLength={9}
-              style={{
-                marginTop: 10,
-                marginBottom: 10,
-                width: '15vw',
-                height: 50,
-              }}
-            ></input>
-            <input
-              autoComplete="off"
-              placeholder="PROCEDIMENTO"
-              className="input"
-              id="inputProcedimento"
-              onFocus={(e) => (e.target.placeholder = '')}
-              onBlur={(e) => (e.target.placeholder = 'PROCEDIMENTO')}
-              onChange={(e) => (obj.procedimento = e.target.value)}
-              defaultValue={paciente.procedimento}
-              type="number"
-              maxLength={9}
-              style={{
-                marginTop: 10,
-                marginBottom: 10,
-                width: '15vw',
-                height: 50,
-              }}
-            ></input>
-            <div style={{ position: 'absolute', top: 25, right: 25, display: 'flex', flexDirection: 'row' }}>
-              <div className='button-red'
-                title={'EXCLUIR'}
-                onClick={
-                  (e) => {
-                    modal(setdialogo, paciente.id, 'CONFIRMAR EXCLUSÃO DO PACIENTE?', deletePaciente, paciente.id); e.stopPropagation();
+          <div className="scroll" style={{ height: '80vh', width: '100%' }}>
+            <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'flex-start', width: '100%' }}>
+              <div id="seletores enfermaria e cti" style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center' }}>
+                <div id="selectcti" className={leito == 'CTI' ? 'button-yellow' : 'button'} style={{ width: 120, height: 100 }}
+                  onClick={() => {
+                    setleito('CTI');
                   }}
-              >
-                <img
-                  alt=""
-                  src={deletar}
+                >
+                  CTI
+                </div>
+                <div id="selectenf" className={leito == 'ENFERMARIA' ? 'button-yellow' : 'button'} style={{ width: 120, height: 100 }}
+                  onClick={() => {
+                    setleito('ENFERMARIA');
+                  }}
+                >
+                  ENFERMARIA
+                </div>
+              </div>
+              <div id="aih e procedimento" style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center' }}>
+                <div id="aih" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                  <div className='text1' style={{ opacity: 0.5 }}>
+                    AIH
+                  </div>
+                  <input
+                    autoComplete="off"
+                    placeholder="AIH"
+                    className="input"
+                    id="inputAih"
+                    onFocus={(e) => (e.target.placeholder = '')}
+                    onBlur={(e) => (e.target.placeholder = 'AIH')}
+                    onChange={(e) => (setaih(e.target.value))}
+                    onKeyUp={() => {
+                      var x = document.getElementById("inputAih").value;
+                      if (isNaN(x) == true || x.length > 8) {
+                        toast(settoast, 'ERRO AO REGISTRAR AIH', 'rgb(231, 76, 60, 1)', 3000);
+                        document.getElementById("inputAih").value = '';
+                        document.getElementById("inputAih").focus();
+                      }
+                    }}
+                    defaultValue={aih}
+                    type="text"
+                    maxLength={9}
+                    style={{
+                      marginTop: 10,
+                      marginBottom: 10,
+                      width: '15vw',
+                      height: 50,
+                    }}
+                  ></input>
+                </div>
+                <div id="procedimento" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                  <div className='text1' style={{ opacity: 0.5 }}>
+                    PROCEDIMENTO
+                  </div>
+                  <input
+                    autoComplete="off"
+                    placeholder="PROCEDIMENTO"
+                    className="input"
+                    id="inputProcedimento"
+                    onFocus={(e) => (e.target.placeholder = '')}
+                    onBlur={(e) => (e.target.placeholder = 'PROCEDIMENTO')}
+                    onChange={(e) => (setprocedimento(e.target.value))}
+                    onKeyUp={() => {
+                      var x = document.getElementById("inputProcedimento").value;
+                      if (isNaN(x) == true || x.length > 8) {
+                        toast(settoast, 'ERRO AO REGISTRAR PROCEDIMENTO', 'rgb(231, 76, 60, 1)', 3000);
+                        document.getElementById("inputProcedimento").value = '';
+                        document.getElementById("inputProcedimento").focus();
+                      }
+                    }}
+                    defaultValue={procedimento}
+                    type="text"
+                    maxLength={9}
+                    style={{
+                      marginTop: 10,
+                      marginBottom: 10,
+                      width: '15vw',
+                      height: 50,
+                    }}
+                  ></input>
+                </div>
+              </div>
+              <div id="botões" style={{ position: 'absolute', top: 25, right: 40, display: 'flex', flexDirection: 'row', justifyContent: 'center' }}>
+                <div className='button-red'
+                  title={'EXCLUIR'}
+                  onClick={
+                    (e) => {
+                      modal(setdialogo, paciente.id, 'CONFIRMAR EXCLUSÃO DO PACIENTE?', deletePaciente, paciente.id); e.stopPropagation();
+                    }}
+                >
+                  <img
+                    alt=""
+                    src={deletar}
+                    style={{
+                      margin: 10,
+                      height: 30,
+                      width: 30,
+                    }}
+                  ></img>
+                </div>
+                <div
+                  id="salvar aih"
+                  className='button-green'
+                  title={vieweditpaciente == 1 ? 'SALVAR' : 'ATUALIZAR'}
+                  onMouseOver={() => {
+                    if (leito == null) {
+                      document.getElementById("seletores enfermaria e cti").className = "button destaque"
+                      toast(settoast, 'INFORME O TIPO DE LEITO', 'rgb(231, 76, 60, 1)', 3000);
+                    } else {
+                      document.getElementById("seletores enfermaria e cti").className = ""
+                    }
+                    if (ofertao2 == null) {
+                      document.getElementById("suplementao2").className = "button destaque"
+                      toast(settoast, 'INFORME A OFERTA DE O2', 'rgb(231, 76, 60, 1)', 3000);
+                    } else {
+                      document.getElementById("suplementao2").className = ""
+                    }
+                    checkEmptyInput("inputAih", 'CAMPO AIH EM BRANCO', "salvar aih");
+                    checkEmptyInput("inputProcedimento", 'CAMPO PROCEDIMENTO EM BRANCO', "salvar aih");
+                    checkEmptyInput("inputNome", 'CAMPO NOME DO PACIENTE EM BRANCO', "salvar aih");
+                    checkEmptyInput("inputNomeMae", 'CAMPO NOME DA MÃE EM BRANCO', "salvar aih");
+                    checkEmptyInput("inputDn", 'CAMPO DATA DE NASCIMENTO EM BRANCO', "salvar aih");
+                    checkEmptyInput("inputGlasgow", 'CAMPO GLASGOW EM BRANCO', "salvar aih");
+                    checkEmptyInput("inputPas", 'CAMPO PRESSÃO ARTERIAL SISTÓLICA EM BRANCO', "salvar aih");
+                    checkEmptyInput("inputPad", 'CAMPO PRESSÃO ARTERIAL DIASTÓLICA EM BRANCO', "salvar aih");
+                    checkEmptyInput("inputFc", 'CAMPO FREQUÊNCIA CARDÍACA EM BRANCO', "salvar aih");
+                    checkEmptyInput("inputFr", 'CAMPO FREQUÊNCIA RESPIRATÓRIA EM BRANCO', "salvar aih");
+                    checkEmptyInput("inputSao2", 'CAMPO SATURAÇÃO DE O2 EM BRANCO', "salvar aih");
+                  }}
+                  onClick={vieweditpaciente == 1 ?
+                    () => {
+                      mountObj();
+                      obj.tipo_leito = leito;
+                      obj.ofertao2 = ofertao2;
+                      insertPaciente();
+                      setvieweditpaciente(0);
+                    } :
+                    () => {
+                      mountObj();
+                      updatePaciente(paciente.id, 'sim');
+                      setvieweditpaciente(0);
+                    }}
+                >
+                  <img
+                    alt=""
+                    src={salvar}
+                    style={{
+                      margin: 10,
+                      height: 30,
+                      width: 30,
+                    }}
+                  ></img>
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', width: '100%' }}>
+              <div id="nome do paciente" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                <div className='text1' style={{ opacity: 0.5 }}>
+                  NOME DO PACIENTE
+                </div>
+                <input
+                  autoComplete="off"
+                  placeholder="NOME DO PACIENTE"
+                  className="input"
+                  id="inputNome"
+                  onFocus={(e) => (e.target.placeholder = '')}
+                  onBlur={(e) => (e.target.placeholder = 'NOME DO PACIENTE')}
+                  onChange={(e) => (setnomepaciente(e.target.value))}
+                  defaultValue={nomepaciente}
+                  type="text"
                   style={{
-                    margin: 10,
-                    height: 30,
-                    width: 30,
+                    marginTop: 10,
+                    marginBottom: 10,
+                    width: '25vw',
+                    height: 50,
                   }}
-                ></img>
+                ></input>
               </div>
-              <div
-                className='button-green'
-                title={vieweditpaciente == 1 ? 'SALVAR' : 'ATUALIZAR'}
-                onClick={vieweditpaciente == 1 ?
-                  () => {
-                    mountObj();
-                    insertPaciente();
-                    setvieweditpaciente(0);
-                  } :
-                  () => {
-                    mountObj();
-                    updatePaciente(paciente.id, 'sim');
-                    setvieweditpaciente(0);
+              <div id="data de nascimento"
+                style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignContent: 'center' }}>
+                <div className='text1' style={{ opacity: 0.5 }}>
+                  DATA DE NASCIMENTO
+                </div>
+                <input
+                  autoComplete="off"
+                  placeholder="DN"
+                  title="DD/MM/YYYY"
+                  className="input"
+                  id="inputDn"
+                  onFocus={(e) => (e.target.placeholder = '')}
+                  onBlur={(e) => (e.target.placeholder = 'DN')}
+                  onKeyUp={() => {
+                    var data = moment(document.getElementById("inputDn").value, 'DD/MM/YYYY');
+                    console.log(data);
+                    clearTimeout(timeout);
+                    timeout = setTimeout(() => {
+                      if (isMoment(data) == true) {
+                        setdn(data);
+                        document.getElementById('inputDn').value = moment(data).format('DD/MM/YYYY');
+                      } else {
+                        toast(settoast, 'DATA INVÁLIDA', 'rgb(231, 76, 60, 1)', 3000);
+                        document.getElementById("inputDn").value = '';
+                        data = '';
+                      }
+                    }, 5000);
                   }}
-              >
-                <img
-                  alt=""
-                  src={salvar}
+                  defaultValue={moment(dn).format('DD/MM/YYYY')}
+                  type="text"
+                  maxLength={10}
                   style={{
-                    margin: 10,
-                    height: 30,
-                    width: 30,
+                    marginTop: 10,
+                    marginBottom: 10,
+                    width: '10vw',
+                    height: 50,
+                    alignSelf: 'center'
                   }}
-                ></img>
+                ></input>
+              </div>
+              <div id="nome da mãe" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                <div className='text1' style={{ opacity: 0.5 }}>
+                  NOME DA MÃE
+                </div>
+                <input
+                  autoComplete="off"
+                  placeholder="NOME DA MÃE DO PACIENTE"
+                  className="input"
+                  id="inputNomeMae"
+                  onFocus={(e) => (e.target.placeholder = '')}
+                  onBlur={(e) => (e.target.placeholder = 'NOME DA MÃE DO PACIENTE')}
+                  onChange={(e) => (setnomemae(e.target.value))}
+                  defaultValue={nomemae}
+                  type="text"
+                  style={{
+                    marginTop: 10,
+                    marginBottom: 10,
+                    width: '25vw',
+                    height: 50,
+                  }}
+                ></input>
+              </div>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', width: '100%', alignSelf: 'center' }}>
+              <div id="dados vitais" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', width: '100%' }}>
+                <div id="dados vitais" style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', width: '100%' }}>
+                  <div id="glasgow" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                    <div className='text1' style={{ opacity: 0.5 }}>
+                      GLASGOW
+                    </div>
+                    <input
+                      title="GLASGOW"
+                      autoComplete="off"
+                      placeholder="GLASGOW"
+                      className="input"
+                      type="text"
+                      maxLength={2}
+                      id="inputGlasgow"
+                      onFocus={(e) => (e.target.placeholder = '')}
+                      onBlur={(e) => (e.target.placeholder = 'GLASGOW')}
+                      defaultValue={glasgow}
+                      onKeyUp={(e) => {
+                        clearTimeout(timeout);
+                        timeout = setTimeout(() => {
+                          var x = e.target.value;
+                          if ((isNaN(x) == false && x > 0 && x < 16) || x == '') {
+                            setglasgow(e.target.value);
+                          } else {
+                            toast(settoast, 'VALOR PARA GLASGOW INCORRETO', 'rgb(231, 76, 60, 1)', 3000);
+                            document.getElementById("inputGlasgow").value = '';
+                            document.getElementById("inputGlasgow").focus();
+                          }
+                        }, 100);
+                      }}
+                      style={{
+                        marginTop: 10,
+                        marginBottom: 10,
+                        width: 100,
+                        height: 50,
+                      }}
+                    ></input>
+                  </div>
+                  <div id="PAS" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                    <div className='text1' style={{ opacity: 0.5 }}>
+                      PAS
+                    </div>
+                    <input
+                      title="PAS"
+                      autoComplete="off"
+                      placeholder="PAS"
+                      className="input"
+                      type="text"
+                      maxLength={3}
+                      id="inputPas"
+                      onFocus={(e) => (e.target.placeholder = '')}
+                      onBlur={(e) => (e.target.placeholder = 'PAS')}
+                      defaultValue={pas}
+                      onKeyUp={(e) => {
+                        clearTimeout(timeout);
+                        timeout = setTimeout(() => {
+                          var x = e.target.value;
+                          if ((isNaN(x) == false && x > 0 && x < 200) || x == '') {
+                            setpas(x);
+                          } else {
+                            toast(settoast, 'VALOR PARA PAS INCORRETO', 'rgb(231, 76, 60, 1)', 3000);
+                            document.getElementById("inputPas").value = '';
+                            document.getElementById("inputPas").focus();
+                          }
+                        }, 100);
+                      }}
+                      style={{
+                        marginTop: 10,
+                        marginBottom: 10,
+                        width: 100,
+                        height: 50,
+                      }}
+                    ></input>
+                  </div>
+                  <div id="PAD" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                    <div className='text1' style={{ opacity: 0.5 }}>
+                      PAD
+                    </div>
+                    <input
+                      title="PAD"
+                      autoComplete="off"
+                      placeholder="PAD"
+                      className="input"
+                      type="text"
+                      maxLength={3}
+                      id="inputPad"
+                      onFocus={(e) => (e.target.placeholder = '')}
+                      onBlur={(e) => (e.target.placeholder = 'PAD')}
+                      defaultValue={pad}
+                      onKeyUp={(e) => {
+                        clearTimeout(timeout);
+                        timeout = setTimeout(() => {
+                          var x = e.target.value;
+                          if ((isNaN(x) == false && x > 0 && x < 200) || x == '') {
+                            setpad(x);
+                          } else {
+                            toast(settoast, 'VALOR PARA PAD INCORRETO', 'rgb(231, 76, 60, 1)', 3000);
+                            document.getElementById("inputPad").value = '';
+                            document.getElementById("inputPad").focus();
+                          }
+                        }, 100);
+                      }}
+                      style={{
+                        marginTop: 10,
+                        marginBottom: 10,
+                        width: 100,
+                        height: 50,
+                      }}
+                    ></input>
+                  </div>
+                  <div id="FC" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                    <div className='text1' style={{ opacity: 0.5 }}>
+                      FC
+                    </div>
+                    <input
+                      title="FC"
+                      autoComplete="off"
+                      placeholder="FC"
+                      className="input"
+                      type="text"
+                      maxLength={2}
+                      id="inputFc"
+                      onFocus={(e) => (e.target.placeholder = '')}
+                      onBlur={(e) => (e.target.placeholder = 'FC')}
+                      defaultValue={fc}
+                      onKeyUp={(e) => {
+                        clearTimeout(timeout);
+                        timeout = setTimeout(() => {
+                          var x = e.target.value;
+                          if ((isNaN(x) == false && x > 0 && x < 250) || x == '') {
+                            setfc(x);
+                          } else {
+                            toast(settoast, 'VALOR PARA FC INCORRETO', 'rgb(231, 76, 60, 1)', 3000);
+                            document.getElementById("inputFc").value = '';
+                            document.getElementById("inputFc").focus();
+                          }
+                        }, 100);
+                      }}
+                      style={{
+                        marginTop: 10,
+                        marginBottom: 10,
+                        width: 100,
+                        height: 50,
+                      }}
+                    ></input>
+                  </div>
+                  <div id="FR" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                    <div className='text1' style={{ opacity: 0.5 }}>
+                      FR
+                    </div>
+                    <input
+                      title="FR"
+                      autoComplete="off"
+                      placeholder="FR"
+                      className="input"
+                      type="text"
+                      maxLength={2}
+                      id="inputFr"
+                      onFocus={(e) => (e.target.placeholder = '')}
+                      onBlur={(e) => (e.target.placeholder = 'FR')}
+                      defaultValue={fr}
+                      onKeyUp={(e) => {
+                        clearTimeout(timeout);
+                        timeout = setTimeout(() => {
+                          var x = e.target.value;
+                          if ((isNaN(x) == false && x > 10 && x < 50) || x == '') {
+                            setfr(x);
+                          } else {
+                            toast(settoast, 'VALOR PARA FR INCORRETO', 'rgb(231, 76, 60, 1)', 3000);
+                            document.getElementById("inputFr").value = '';
+                            document.getElementById("inputFr").focus();
+                          }
+                        }, 100);
+                      }}
+                      style={{
+                        marginTop: 10,
+                        marginBottom: 10,
+                        width: 100,
+                        height: 50,
+                      }}
+                    ></input>
+                  </div>
+                  <div id="SAO2" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                    <div className='text1' style={{ opacity: 0.5 }}>
+                      SAO2
+                    </div>
+                    <input
+                      title="SAO2"
+                      autoComplete="off"
+                      placeholder="SAO2"
+                      className="input"
+                      type="text"
+                      maxLength={3}
+                      id="inputSao2"
+                      onFocus={(e) => (e.target.placeholder = '')}
+                      onBlur={(e) => (e.target.placeholder = 'SAO2')}
+                      defaultValue={sao2}
+                      onKeyUp={(e) => {
+                        clearTimeout(timeout);
+                        timeout = setTimeout(() => {
+                          var x = e.target.value;
+                          if ((isNaN(x) == false && x > 0 && x < 101) || x == '') {
+                            setsao2(x);
+                          } else {
+                            toast(settoast, 'VALOR PARA SAO2 INCORRETO', 'rgb(231, 76, 60, 1)', 3000);
+                            document.getElementById("inputSao2").value = '';
+                            document.getElementById("inputSao2").focus();
+                          }
+                        }, 100);
+                      }}
+                      style={{
+                        marginTop: 10,
+                        marginBottom: 10,
+                        width: 100,
+                        height: 50,
+                      }}
+                    ></input>
+                  </div>
+                </div>
+              </div>
+              <div id="suplementação de o2"
+                style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignSelf: 'center' }}>
+                <div className='text1' style={{ opacity: 0.5 }}>
+                  SUPLEMENTAÇÃO DE O2
+                </div>
+                <div id="suplementao2"
+                  style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center' }}>
+                  {suplementacaoO2.map(item => (
+                    <div
+                      key={'suplementacaoO2' + item}
+                      className={ofertao2 == item ? "button-yellow" : "button"}
+                      id={"suplementacaoO2" + item}
+                      style={{ width: '10vw' }}
+                      onClick={() => {
+                        setofertao2(item);
+                      }}
+                    >
+                      {item}
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div id="resumo do caso"
+                style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', marginBottom: 10, alignSelf: 'center', width: '100%' }}>
+                <div className='text1' style={{ opacity: 0.5, alignSelf: 'center' }}>
+                  RESUMO DO CASO
+                </div>
+                <textarea
+                  className="textarea"
+                  placeholder='RESUMO DO CASO'
+                  onFocus={(e) => (e.target.placeholder = '')}
+                  onBlur={(e) => (e.target.placeholder = 'RESUMO DO CASO')}
+                  onKeyUp={(e) => {
+                    clearTimeout(timeout);
+                    var dados = e.target.value;
+                    timeout = setTimeout(() => {
+                      setresumo(dados);
+                    }, 2000);
+                    e.stopPropagation()
+                  }}
+                  style={{ display: 'flex', flexDirection: 'center', width: 'calc(60vw + 20px)', alignSelf: 'center' }}
+                  id="inputResumo"
+                  title="INFORME AQUI UM BREVE RESUMO DO CASO."
+                  defaultValue={resumo}
+                >
+                </textarea>
               </div>
             </div>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'row', width: '100%' }}>
-            <input
-              autoComplete="off"
-              placeholder="NOME DO PACIENTE"
-              className="input"
-              id="inputNome"
-              onFocus={(e) => (e.target.placeholder = '')}
-              onBlur={(e) => (e.target.placeholder = 'NOME DO PACIENTE')}
-              onChange={(e) => (obj.nome_paciente = e.target.value)}
-              defaultValue={paciente.nome_paciente}
-              type="text"
-              style={{
-                marginTop: 10,
-                marginBottom: 10,
-                width: '25vw',
-                height: 50,
-              }}
-            ></input>
-            <input
-              autoComplete="off"
-              placeholder="DN"
-              title="DDMMYYYY"
-              className="input"
-              id="inputDn"
-              onFocus={(e) => (e.target.placeholder = '')}
-              onBlur={(e) => (e.target.placeholder = 'DN')}
-              onKeyUp={() => {
-                var data = moment(document.getElementById("inputDn").value, 'DD/MM/YYYY');
-                clearTimeout(timeout);
-                timeout = setTimeout(() => {
-                  if (moment(data).format('DD/MM/YYYY') != 'Invalid date') {
-                    obj.dn_paciente = data;
-                    document.getElementById('inputDn').value = moment(data).format('DD/MM/YYYY');
-                  } else {
-                    toast(settoast, 'DATA INVÁLIDA', 'rgb(229, 126, 52, 1', 3000);
-                    document.getElementById("inputDn").value = '';
-                    data = '';
-                  }
-                }, 1000);
-              }}
-              defaultValue={moment(paciente.dn_paciente).format('DD/MM/YYYY')}
-              type="text"
-              maxLength={8}
-              style={{
-                marginTop: 10,
-                marginBottom: 10,
-                width: '10vw',
-                height: 50,
-              }}
-            ></input>
-            <input
-              autoComplete="off"
-              placeholder="NOME DA MÃE DO PACIENTE"
-              className="input"
-              id="inputNomeMae"
-              onFocus={(e) => (e.target.placeholder = '')}
-              onBlur={(e) => (e.target.placeholder = 'NOME DA MÃE DO PACIENTE')}
-              onChange={(e) => (obj.nome_mae = e.target.value)}
-              defaultValue={paciente.nome_mae}
-              type="text"
-              style={{
-                marginTop: 10,
-                marginBottom: 10,
-                width: '25vw',
-                height: 50,
-              }}
-            ></input>
-          </div>
-          <div className="text1" style={{ width: '100%' }}>DADOS VITAIS</div>
-          <div id="dados vitais" style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', width: '100%' }}>
-            <input
-              title="GLASGOW"
-              autoComplete="off"
-              placeholder="GLASGOW"
-              className="input"
-              type="text"
-              maxLength={2}
-              id="inputGlasgow"
-              onFocus={(e) => (e.target.placeholder = '')}
-              onBlur={(e) => (e.target.placeholder = 'GLASGOW')}
-              defaultValue={paciente.glasgow}
-              onKeyUp={(e) => {
-                clearTimeout(timeout);
-                timeout = setTimeout(() => {
-                  var x = e.target.value;
-                  if (isNaN(x) == false && x > 0 && x < 16) {
-                    obj.glasgow = e.target.value
-                  } else {
-                    document.getElementById("inputGlasgow").value = '';
-                    toast(settoast, 'DADO INCORRETO', 'rgb(231, 76, 60, 1)', 3000);
-                  }
-                }, 1000);
-              }}
-              style={{
-                marginTop: 10,
-                marginBottom: 10,
-                width: 100,
-                height: 50,
-              }}
-            ></input>
-            <input
-              title="PAS"
-              autoComplete="off"
-              placeholder="PAS"
-              className="input"
-              type="text"
-              maxLength={3}
-              id="inputPas"
-              onFocus={(e) => (e.target.placeholder = '')}
-              onBlur={(e) => (e.target.placeholder = 'PAS')}
-              defaultValue={paciente.pas}
-              onKeyUp={(e) => {
-                clearTimeout(timeout);
-                timeout = setTimeout(() => {
-                  var x = e.target.value;
-                  if (isNaN(x) == false && x > 0 && x < 200) {
-                    obj.pas = e.target.value
-                  } else {
-                    document.getElementById("inputPas").value = '';
-                    toast(settoast, 'DADO INCORRETO', 'rgb(231, 76, 60, 1)', 3000);
-                  }
-                }, 1000);
-              }}
-              style={{
-                marginTop: 10,
-                marginBottom: 10,
-                width: 100,
-                height: 50,
-              }}
-            ></input>
-            <input
-              title="PAD"
-              autoComplete="off"
-              placeholder="PAD"
-              className="input"
-              type="text"
-              maxLength={3}
-              id="inputPad"
-              onFocus={(e) => (e.target.placeholder = '')}
-              onBlur={(e) => (e.target.placeholder = 'PAD')}
-              defaultValue={paciente.pad}
-              onKeyUp={(e) => {
-                clearTimeout(timeout);
-                timeout = setTimeout(() => {
-                  var x = e.target.value;
-                  if (isNaN(x) == false && x > 0 && x < 200) {
-                    obj.pad = e.target.value
-                  } else {
-                    document.getElementById("inputPad").value = '';
-                    toast(settoast, 'DADO INCORRETO', 'rgb(231, 76, 60, 1)', 3000);
-                  }
-                }, 1000);
-              }}
-              style={{
-                marginTop: 10,
-                marginBottom: 10,
-                width: 100,
-                height: 50,
-              }}
-            ></input>
-            <input
-              title="FC"
-              autoComplete="off"
-              placeholder="FC"
-              className="input"
-              type="text"
-              maxLength={2}
-              id="inputFc"
-              onFocus={(e) => (e.target.placeholder = '')}
-              onBlur={(e) => (e.target.placeholder = 'FC')}
-              defaultValue={paciente.fc}
-              onKeyUp={(e) => {
-                clearTimeout(timeout);
-                timeout = setTimeout(() => {
-                  var x = e.target.value;
-                  if (isNaN(x) == false && x > 0 && x < 250) {
-                    obj.fc = e.target.value
-                  } else {
-                    document.getElementById("inputFc").value = '';
-                    toast(settoast, 'DADO INCORRETO', 'rgb(231, 76, 60, 1)', 3000);
-                  }
-                }, 1000);
-              }}
-              style={{
-                marginTop: 10,
-                marginBottom: 10,
-                width: 100,
-                height: 50,
-              }}
-            ></input>
-            <input
-              title="FR"
-              autoComplete="off"
-              placeholder="FR"
-              className="input"
-              type="text"
-              maxLength={2}
-              id="inputFr"
-              onFocus={(e) => (e.target.placeholder = '')}
-              onBlur={(e) => (e.target.placeholder = 'FR')}
-              defaultValue={paciente.fr}
-              onKeyUp={(e) => {
-                clearTimeout(timeout);
-                timeout = setTimeout(() => {
-                  var x = e.target.value;
-                  if (isNaN(x) == false && x > 0 && x < 40) {
-                    obj.fr = e.target.value
-                  } else {
-                    document.getElementById("inputFr").value = '';
-                    toast(settoast, 'DADO INCORRETO', 'rgb(231, 76, 60, 1)', 3000);
-                  }
-                }, 1000);
-              }}
-              style={{
-                marginTop: 10,
-                marginBottom: 10,
-                width: 100,
-                height: 50,
-              }}
-            ></input>
-            <input
-              title="SAO2"
-              autoComplete="off"
-              placeholder="SAO2"
-              className="input"
-              type="text"
-              maxLength={3}
-              id="inputSao2"
-              onFocus={(e) => (e.target.placeholder = '')}
-              onBlur={(e) => (e.target.placeholder = 'SAO2')}
-              defaultValue={paciente.sao2}
-              onKeyUp={(e) => {
-                clearTimeout(timeout);
-                timeout = setTimeout(() => {
-                  var x = e.target.value;
-                  if (isNaN(x) == false && x > 0 && x < 101) {
-                    obj.sao2 = e.target.value
-                  } else {
-                    document.getElementById("inputFr").value = '';
-                    toast(settoast, 'DADO INCORRETO', 'rgb(231, 76, 60, 1)', 3000);
-                  }
-                }, 1000);
-              }}
-              style={{
-                marginTop: 10,
-                marginBottom: 10,
-                width: 100,
-                height: 50,
-              }}
-            ></input>
-          </div>
-          <div className="text1" style={{ width: '100%' }}>SUPLEMENTAÇÃO DE O2</div>
-          <div id="suplementao2"
-            style={{ width: '100%', display: 'flex', flexDirection: 'row', justifyContent: 'center' }}>
-            {suplementacaoO2.map(item => (
-              <div
-                key={'suplementacaoO2' + item}
-                className={paciente.ofertao2 == item ? "button-yellow" : "button"}
-                id={"suplementacaoO2" + item}
-                style={{ width: '10vw' }}
-                onClick={() => {
-                  var botoes = document.getElementById("suplementao2").getElementsByClassName("button-yellow");
-                  for (var i = 0; i < botoes.length; i++) {
-                    botoes.item(i).className = "button";
-                  }
-                  document.getElementById('suplementacaoO2' + item).className = "button-yellow";
-                  obj.ofertao2 = item;
-                }}
-              >
-                {item}
-              </div>
-            ))}
-          </div>
-          <textarea
-            className="textarea"
-            placeholder='RESUMO DO CASO'
-            onFocus={(e) => (e.target.placeholder = '')}
-            onBlur={(e) => (e.target.placeholder = 'RESUMO DO CASO')}
-            onKeyUp={(e) => {
-              clearTimeout(timeout);
-              var dados = e.target.value;
-              timeout = setTimeout(() => {
-                obj.dados_susfacil = dados;
-              }, 2000);
-              e.stopPropagation()
-            }}
-            style={{ display: 'flex', flexDirection: 'center', width: 'calc(60vw + 20px)', marginTop: 20 }}
-            id="inputResumo"
-            title="INFORME AQUI UM BREVE RESUMO DO CASO."
-            defaultValue={paciente.dados_susfacil}
-          >
-          </textarea>
         </div>
       </div >
     );
@@ -876,7 +1050,7 @@ function Pacientes() {
           <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
             <div id="cancelamento de AIH"
               style={{
-                display: item.status == 'AGUARDANDO VAGA' || item.status == 'VAGA LIBERADA' || item.status == 'TRANSPORTE SOLICITADO' || item.status == 'TRANSPORTE CANCELADO' ? 'flex' : 'none',
+                display: item.status == 'AGUARDANDO VAGA' || item.status == 'VAGA LIBERADA' || item.status == 'TRANSPORTE CANCELADO' ? 'flex' : 'none',
                 flexDirection: 'column', justifyContent: 'center',
                 alignSelf: 'center', alignItems: 'center', alignContent: 'center',
               }}>
@@ -892,7 +1066,7 @@ function Pacientes() {
                     loadObj(item);
                     obj.status = 'AIH CANCELADA NA ORIGEM'
                     // eslint-disable-next-line
-                    obj.dados_susfacil = obj.dados_susfacil + '\n' + moment().format('DD/MM/YYYY - HH:mm') + '\n### AIH CANCELADA NA ORIGEM ###\n' + 'OBITO';
+                    obj.dados_susfacil = obj.dados_susfacil + '\n' + moment().format('DD/MM/YYYY - HH:mm') + '\n\n## AIH CANCELADA NA ORIGEM ##\n' + 'OBITO';
                     updatePaciente(item.id, 'sim');
                     // cancelar transporte, se já empenhado.
                     if (transportes.filter(valor => valor.aih == item.aih).length > 0) {
@@ -908,7 +1082,7 @@ function Pacientes() {
                     loadObj(item);
                     obj.status = 'AIH CANCELADA NA ORIGEM'
                     // eslint-disable-next-line
-                    obj.dados_susfacil = obj.dados_susfacil + '\n' + moment().format('DD/MM/YYYY - HH:mm') + '\n### AIH CANCELADA NA ORIGEM ###\n' + 'EVASÃO';
+                    obj.dados_susfacil = obj.dados_susfacil + '\n' + moment().format('DD/MM/YYYY - HH:mm') + '\n\n## AIH CANCELADA NA ORIGEM ##\n' + 'EVASÃO';
                     updatePaciente(item.id, 'sim');
                     // cancelar transporte, se já empenhado.
                     if (transportes.filter(valor => valor.aih == item.aih)) {
@@ -924,7 +1098,7 @@ function Pacientes() {
                     loadObj(item);
                     obj.status = 'AIH CANCELADA NA ORIGEM'
                     // eslint-disable-next-line
-                    obj.dados_susfacil = obj.dados_susfacil + '\n' + moment().format('DD/MM/YYYY - HH:mm') + '\n### AIH CANCELADA NA ORIGEM ###\n' + 'OBITO';
+                    obj.dados_susfacil = obj.dados_susfacil + '\n' + moment().format('DD/MM/YYYY - HH:mm') + '\n\n## AIH CANCELADA NA ORIGEM ##\n' + 'OBITO';
                     updatePaciente(item.id, 'sim');
                     // cancelar transporte, se já empenhado.
                     if (transportes.filter(valor => valor.aih == item.aih).length > 0) {
@@ -945,15 +1119,19 @@ function Pacientes() {
                   timeout = setTimeout(() => {
                     loadObj(item);
                     obj.status = 'AIH CANCELADA NA ORIGEM'
-                    obj.dados_susfacil = obj.dados_susfacil + '\n' + moment().format('DD/MM/YYYY - HH:mm') + '\n### AIH CANCELADA NA ORIGEM ###\n' + e.target.value;
-                    updatePaciente(item.id, 'sim');
-                    // cancelar transporte, se já empenhado.
-                    if (transportes.filter(valor => valor.aih == item.aih).length > 0) {
-                      updateTransporte(item.aih, 'AIH CANCELADA NA ORIGEM', document.getElementById("inputJustificativaCancelamentoOrigem").value.toUpperCase());
-                      toast(settoast, 'AIH CANCELADA', 'rgb(82, 190, 128, 1', 3000);
+                    obj.dados_susfacil = obj.dados_susfacil + '\n' + moment().format('DD/MM/YYYY - HH:mm') + '\n\n## AIH CANCELADA NA ORIGEM ##\n' + e.target.value;
+                    if (document.getElementById("inputJustificativaCancelamentoOrigem").value == '') {
+                      toast(settoast, 'É NECESSÁRIO INFORMAR O MOTIVO DO CANCELAMENTO DA AIH', 'rgb(231, 76, 60, 1)', 3000);
+                    } else {
+                      updatePaciente(item.id, 'sim');
+                      // cancelar transporte, se já empenhado.
+                      if (transportes.filter(valor => valor.aih == item.aih).length > 0) {
+                        updateTransporte(item.aih, 'AIH CANCELADA NA ORIGEM', document.getElementById("inputJustificativaCancelamentoOrigem").value.toUpperCase());
+                        toast(settoast, 'AIH CANCELADA', 'rgb(82, 190, 128, 1', 3000);
+                      }
                     }
                   }, 2000);
-                  e.stopPropagation()
+                  e.stopPropagation();
                 }}
                 style={{
                   display: justificativa == 1 ? 'flex' : 'none',
@@ -985,16 +1163,20 @@ function Pacientes() {
                 style={{ width: '14vw', height: 75 }}
                 onClick={relatorio == null ?
                   () => {
+                    setrelatorio(moment());
                     loadObj(item);
                     obj.indicador_relatorio = moment();
+                    obj.exames_ok = exames;
+                    obj.aih_ok = aih;
                     updatePaciente(item.id, 'não');
-                    setrelatorio(moment())
                   } :
                   () => {
-                    loadObj(item);
-                    obj.indicador_relatorio = null;
-                    updatePaciente(item.id, 'não');
                     setrelatorio(null);
+                    loadObj(item);
+                    obj.indicador_relatorio = moment();
+                    obj.exames_ok = exames;
+                    obj.aih_ok = aih;
+                    updatePaciente(item.id, 'não');
                   }
                 }
               >
@@ -1004,16 +1186,21 @@ function Pacientes() {
                 style={{ width: '14vw', height: 75 }}
                 onClick={exames == 0 ?
                   () => {
+                    setexames(1);
                     loadObj(item);
+                    obj.indicador_relatorio = relatorio;
                     obj.exames_ok = 1;
+                    obj.aih_ok = aih;
                     updatePaciente(item.id, 'não');
-                    setexames(1)
+                    
                   } :
                   () => {
-                    loadObj(item);
-                    obj.exames_ok = 0;
-                    updatePaciente(item.id, 'não');
                     setexames(0);
+                    loadObj(item);
+                    obj.indicador_relatorio = relatorio;
+                    obj.exames_ok = 0;
+                    obj.aih_ok = aih;
+                    updatePaciente(item.id, 'não');
                   }
                 }
               >
@@ -1023,16 +1210,20 @@ function Pacientes() {
                 style={{ width: '14vw', height: 75 }}
                 onClick={aih == 0 ?
                   () => {
+                    setaih(1);
                     loadObj(item);
+                    obj.indicador_relatorio = relatorio;
+                    obj.exames_ok = exames;
                     obj.aih_ok = 1;
                     updatePaciente(item.id, 'não');
-                    setaih(1)
                   } :
                   () => {
+                    setaih(0);
                     loadObj(item);
+                    obj.indicador_relatorio = relatorio;
+                    obj.exames_ok = exames;
                     obj.aih_ok = 0;
                     updatePaciente(item.id, 'não');
-                    setaih(0);
                   }
                 }
               >
@@ -1092,12 +1283,16 @@ function Pacientes() {
                   onKeyUp={(e) => {
                     clearTimeout(timeout);
                     timeout = setTimeout(() => {
-                      loadObj(item);
-                      obj.status = 'TRANSPORTE CANCELADO';
-                      obj.dados_susfacil = obj.dados_susfacil + '\n' + moment().format('DD/MM/YYYY - HH:mm') + '\n### TRANSPORTE CANCELADO NA ORIGEM ###\n' + e.target.value;
-                      updatePaciente(item.id, 'sim');
-                      var justificativa = e.target.value;
-                      updateTransporte(item.aih, 'TRANSPORTE CANCELADO', justificativa);
+                      if (e.target.value == '') {
+                        toast(settoast, 'É NECESSÁRIO INFORMAR O MOTIVO DO CANCELAMENTO DO TRANSPORTE', 'rgb(231, 76, 60, 1)', 3000);
+                      } else {
+                        loadObj(item);
+                        obj.status = 'TRANSPORTE CANCELADO';
+                        obj.dados_susfacil = obj.dados_susfacil + '\n' + moment().format('DD/MM/YYYY - HH:mm') + '\n\n## TRANSPORTE CANCELADO NA ORIGEM ##\n' + e.target.value;
+                        updatePaciente(item.id, 'sim');
+                        var justificativa = e.target.value;
+                        updateTransporte(item.aih, 'TRANSPORTE CANCELADO', justificativa.toUpperCase());
+                      }
                     }, 2000);
                     e.stopPropagation();
                   }}
@@ -1244,7 +1439,7 @@ function Pacientes() {
     },
   ]
 
-  function DestinoSelector() {
+  const DestinoSelector = useCallback(() => {
     return (
       <div className="fundo"
         style={{ display: viewdestinoselector > 0 ? 'flex' : 'none' }}
@@ -1260,7 +1455,7 @@ function Pacientes() {
         >
           <div className='scroll'>
             <div className="text1" style={{ color: 'rgb(82, 190, 128, 1' }}>VAGA LIBERADA!</div>
-            <div className="text1">SELECIONE A UNIDADE DE DESTINO</div>
+            <div className="text1" style={{ opacity: 0.3 }}>SELECIONE A UNIDADE DE DESTINO</div>
             <div id="lista de unidades"
 
               className="scroll"
@@ -1276,7 +1471,7 @@ function Pacientes() {
                     for (var i = 0; i < botoes.length; i++) {
                       botoes.item(i).className = "button";
                     }
-                    document.getElementById('unidade' + item.id).className = "button-red";
+                    document.getElementById('unidade' + item.id).className = "button-yellow";
                     loadObj(paciente);
                     obj.unidade_destino = item.unidade;
                   }}
@@ -1286,110 +1481,133 @@ function Pacientes() {
               ))}
 
             </div>
-            <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', flexWrap: 'wrap', width: '50vw' }}>
-              <input
-                autoComplete="off"
-                placeholder="SETOR"
-                className="input"
-                id="inputSetorDestino"
-                onFocus={(e) => (e.target.placeholder = '')}
-                onBlur={(e) => (e.target.placeholder = 'SETOR')}
-                onChange={(e) => (obj.setor_destino = e.target.value)}
-                defaultValue={paciente.setor_destino}
-                type="text"
-                style={{
-                  marginTop: 10,
-                  marginBottom: 10,
-                  width: '25vw',
-                  height: 50,
-                }}
-              ></input>
-              <input
-                autoComplete="off"
-                placeholder="LEITO"
-                className="input"
-                id="inputLeitoDestino"
-                onFocus={(e) => (e.target.placeholder = '')}
-                onBlur={(e) => (e.target.placeholder = 'LEITO')}
-                onChange={(e) => (obj.leito_destino = e.target.value)}
-                defaultValue={paciente.leito_destino}
-                type="text"
-                style={{
-                  marginTop: 10,
-                  marginBottom: 10,
-                  width: 100,
-                  height: 50,
-                }}
-              ></input>
-              <input
-                autoComplete="off"
-                placeholder="NOME DO CONTATO"
-                className="input"
-                id="inputContatoNome"
-                onFocus={(e) => (e.target.placeholder = '')}
-                onBlur={(e) => (e.target.placeholder = 'NOME DO CONTATO')}
-                onChange={(e) => (obj.contato_nome = e.target.value)}
-                defaultValue={paciente.contato_nome}
-                type="text"
-                style={{
-                  marginTop: 10,
-                  marginBottom: 10,
-                  width: '100%',
-                  height: 50,
-                }}
-              ></input>
-              <input
-                autoComplete="off"
-                placeholder="TELEFONE DO CONTATO"
-                className="input"
-                id="inputContatoTelefone"
-                onFocus={(e) => (e.target.placeholder = '')}
-                onBlur={(e) => (e.target.placeholder = 'TELEFONE DO CONTATO')}
-                onChange={(e) => (obj.contato_telefone = e.target.value)}
-                defaultValue={paciente.contato_telefone}
-                type="text"
-                style={{
-                  marginTop: 10,
-                  marginBottom: 10,
-                  width: '100%',
-                  height: 50,
-                }}
-              ></input>
-              <textarea
-                className="textarea"
-                placeholder='DEMAIS OBSERVAÇÕES.'
-                onFocus={(e) => (e.target.placeholder = '')}
-                onBlur={(e) => (e.target.placeholder = 'SETOR DE DESTINO, NOME DO PROFISSIONAL QUE LIBEROU A VAGA E DEMAIS OBSERVAÇÕES.')}
-                style={{ display: 'flex', flexDirection: 'center', width: '100%' }}
-                id="inputDadosVaga"
-                title="INFORME AQUI DEMAIS OBSERVAÇÕES."
-              >
-              </textarea>
+
+            <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', flexWrap: 'wrap' }}>
+              <div id="setor" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                <div className="text1" style={{ opacity: 0.3 }}>SETOR</div>
+                <input
+                  autoComplete="off"
+                  placeholder="SETOR"
+                  className="input"
+                  id="inputSetorDestino"
+                  onFocus={(e) => (e.target.placeholder = '')}
+                  onBlur={(e) => (e.target.placeholder = 'SETOR')}
+                  onChange={(e) => (obj.setor_destino = e.target.value)}
+                  defaultValue={paciente.setor_destino}
+                  type="text"
+                  style={{
+                    marginTop: 10,
+                    marginBottom: 10,
+                    width: '25vw',
+                    height: 50,
+                  }}
+                ></input>
+              </div>
+              <div id="leito" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                <div className="text1" style={{ opacity: 0.3 }}>LEITO</div>
+                <input
+                  autoComplete="off"
+                  placeholder="LEITO"
+                  className="input"
+                  id="inputLeitoDestino"
+                  onFocus={(e) => (e.target.placeholder = '')}
+                  onBlur={(e) => (e.target.placeholder = 'LEITO')}
+                  onChange={(e) => (obj.leito_destino = e.target.value)}
+                  defaultValue={paciente.leito_destino}
+                  type="text"
+                  style={{
+                    marginTop: 10,
+                    marginBottom: 10,
+                    width: 100,
+                    height: 50,
+                  }}
+                ></input>
+              </div>
             </div>
-            <div className="button-green" style={{ width: 200, alignSelf: 'center' }}
-              onClick={() => {
-                obj.setor_destino = document.getElementById("inputSetorDestino").value;
-                obj.leito_destino = document.getElementById("inputLeitoDestino").value;
-                obj.contato_nome = document.getElementById("inputContatoNome").value;
-                obj.contato_telefone = document.getElementById("inputContatoTelefone").value;
-                obj.indicador_data_confirmacao = moment();
-                obj.status = 'VAGA LIBERADA';
-                obj.dados_susfacil = paciente.dados_susfacil + "\n## INFORMAÇÕES SOBRE A VAGA ##" +
-                  "\nSETOR: " + obj.setor_destino + " - LEITO: " + obj.leito_destino +
-                  "\nNOME DO CONTATO: " + obj.contato_nome +
-                  "\nTELEFONE DO CONTATO: " + obj.contato_telefone +
-                  "\nOBS: " + document.getElementById("inputDadosVaga").value;
-                updatePaciente(paciente.id, 'sim');
-                setviewdestinoselector(0);
-              }}
+
+            <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', flexWrap: 'wrap' }}>
+              <div id="contato" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                <div className="text1" style={{ opacity: 0.3 }}>CONTATO</div>
+                <input
+                  autoComplete="off"
+                  placeholder="NOME DO CONTATO"
+                  className="input"
+                  id="inputContatoNome"
+                  onFocus={(e) => (e.target.placeholder = '')}
+                  onBlur={(e) => (e.target.placeholder = 'NOME DO CONTATO')}
+                  onChange={(e) => (obj.contato_nome = e.target.value)}
+                  defaultValue={paciente.contato_nome}
+                  type="text"
+                  style={{
+                    marginTop: 10,
+                    marginBottom: 10,
+                    width: '25vw',
+                    height: 50,
+                  }}
+                ></input>
+              </div>
+              <div id="telefone" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                <div className="text1" style={{ opacity: 0.3 }}>TELEFONE</div>
+                <input
+                  autoComplete="off"
+                  placeholder="TELEFONE DO CONTATO"
+                  className="input"
+                  id="inputContatoTelefone"
+                  onFocus={(e) => (e.target.placeholder = '')}
+                  onBlur={(e) => (e.target.placeholder = 'TELEFONE DO CONTATO')}
+                  onChange={(e) => (obj.contato_telefone = e.target.value)}
+                  defaultValue={paciente.contato_telefone}
+                  type="text"
+                  style={{
+                    marginTop: 10,
+                    marginBottom: 10,
+                    width: '25vw',
+                    height: 50,
+                  }}
+                ></input>
+              </div>
+            </div>
+            <div className="text1" style={{ opacity: 0.3 }}>DEMAIS OBSERVAÇÕES</div>
+            <textarea
+              className="textarea"
+              placeholder='DEMAIS OBSERVAÇÕES.'
+              onFocus={(e) => (e.target.placeholder = '')}
+              onBlur={(e) => (e.target.placeholder = 'SETOR DE DESTINO, NOME DO PROFISSIONAL QUE LIBEROU A VAGA E DEMAIS OBSERVAÇÕES.')}
+              style={{ display: 'flex', flexDirection: 'center', width: '50vw' }}
+              id="inputDadosVaga"
+              title="INFORME AQUI DEMAIS OBSERVAÇÕES."
             >
-              CONFIRMAR
-            </div>
+            </textarea>
+          </div>
+          <div id="salvar vaga" className="button-green" style={{ width: 200, alignSelf: 'center' }}
+            onMouseOver={() => {
+              checkEmptyInput("inputSetorDestino", "CAMPO SETOR É OBRIGATÓRIO", "salvar vaga");
+              checkEmptyInput("inputLeitoDestino", "CAMPO LEITO É OBRIGATÓRIO", "salvar vaga");
+              checkEmptyInput("inputContatoNome", "CAMPO NOME DO CONTATO É OBRIGATÓRIO", "salvar vaga");
+              checkEmptyInput("inputContatoTelefone", "CAMPO TELEFONE DO DESTINO É OBRIGATÓRIO", "salvar vaga");
+            }}
+            onClick={() => {
+              obj.setor_destino = document.getElementById("inputSetorDestino", "salvar vaga").value.toUpperCase();
+              obj.leito_destino = document.getElementById("inputLeitoDestino", "salvar vaga").value.toUpperCase();
+              obj.contato_nome = document.getElementById("inputContatoNome", "salvar vaga").value.toUpperCase();
+              obj.contato_telefone = document.getElementById("inputContatoTelefone", "salvar vaga").value.toUpperCase();
+              obj.indicador_data_confirmacao = moment();
+              obj.status = 'VAGA LIBERADA';
+              obj.dados_susfacil = paciente.dados_susfacil + "\n\n## INFORMAÇÕES SOBRE A VAGA ##" +
+                "\nSETOR: " + obj.setor_destino + " - LEITO: " + obj.leito_destino +
+                "\nNOME DO CONTATO: " + obj.contato_nome +
+                "\nTELEFONE DO CONTATO: " + obj.contato_telefone +
+                "\nOBS: " + document.getElementById("inputDadosVaga").value.toUpperCase();
+              updatePaciente(paciente.id, 'sim');
+              setviewdestinoselector(0);
+            }}
+          >
+            CONFIRMAR
           </div>
         </div>
       </div>
     )
-  }
+  }, [viewdestinoselector]);
 
   return (
     <div style={{ display: pagina == 1 ? 'flex' : 'none' }}>

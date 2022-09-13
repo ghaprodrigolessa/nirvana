@@ -306,9 +306,10 @@ function TransporteSanitario() {
         id="mostraambulancia"
         className='button'
         style={{
-          position: 'absolute', top: 45, right: -20,
+          position: 'absolute', top: 65, right: -5, zIndex: 20,
           display: 'none', width: '10vw',
           flexDirection: 'column', justifyContent: 'center',
+          backgroundColor: 'rgb(97, 99, 110, 1)',
         }}
         onClick={(e) => { document.getElementById("mostraambulancia").style.display = 'none'; e.stopPropagation() }}
       >
@@ -355,30 +356,32 @@ function TransporteSanitario() {
     return (
       <div className='main' style={{ position: 'relative' }}>
         <div className="text3">LISTA DE TRANSPORTES SOLICITADOS</div>
-        <div className="header" style={{ width: 'calc(100vw - 40px)', maxWidth: 'calc(100vw - 40px)' }}>
-          <div className="button-transparent" style={{ width: '10vw' }}>
-            UNIDADE DE ORIGEM
-          </div>
-          <div className="button-transparent" style={{ width: '10vw' }}>
-            PROTOCOLO
-          </div>
-          <div className="button-transparent" style={{ width: '10vw' }}>
-            DATA DE SOLICITAÇÃO
-          </div>
-          <div className="button-transparent" style={{ width: '10vw' }}>
-            FINALIDADE
-          </div>
-          <div className="button-transparent" style={{
-            width: window.innerWidth > 1200 ? '20vw' : '10vw',
-            display: window.innerWidth > 750 ? 'flex' : 'none',
-          }}>
-            NOME DO PACIENTE
-          </div>
-          <div className="button-transparent" style={{ width: '10vw' }}>
-            UNIDADE DE DESTINO
-          </div>
-          <div className="button-transparent" style={{ width: '10vw' }}>
-            STATUS
+        <div className="header-scroll" style={{ width: 'calc(100vw - 40px)', maxWidth: 'calc(100vw - 40px)' }}>
+          <div className="header-row" style={{ justifyContent: 'space-between' }}>
+            <div className="button-transparent" style={{ width: '10vw' }}>
+              UNIDADE DE ORIGEM
+            </div>
+            <div className="button-transparent" style={{ width: '10vw' }}>
+              PROTOCOLO
+            </div>
+            <div className="button-transparent" style={{ width: '10vw' }}>
+              DATA DE SOLICITAÇÃO
+            </div>
+            <div className="button-transparent" style={{ width: '10vw' }}>
+              FINALIDADE
+            </div>
+            <div className="button-transparent" style={{
+              width: '20vw',
+              display: window.innerWidth > 750 ? 'flex' : 'none',
+            }}>
+              NOME DO PACIENTE
+            </div>
+            <div className="button-transparent" style={{ width: '10vw' }}>
+              UNIDADE DE DESTINO
+            </div>
+            <div className="button-transparent" style={{ width: '10vw' }}>
+              STATUS
+            </div>
           </div>
         </div>
         <div className="scroll"
@@ -391,6 +394,15 @@ function TransporteSanitario() {
             <div key={'transportes' + item.id}>
               <div
                 className="row"
+                style={{
+                  // classificando registros por cores, conforme o tempo de internação na upa.
+                  backgroundColor:
+                    item.status == 'TRANSPORTE CANCELADO' ? 'rgb(229, 126, 52, 0.5)' :
+                      item.status == 'TRANSPORTE SOLICITADO' || item.status == 'TRANSPORTE LIBERADO' || item.status == 'EM TRANSPORTE' ? 'rgb(229, 126, 52, 0.5' :
+                        'rgb(82, 190, 128, 0.5)',
+                  borderRadius: 5,
+                  justifyContent: 'space-between',
+                }}
                 onClick={() => {
                   makeObj(item);
                   setTimeout(() => {
@@ -400,7 +412,7 @@ function TransporteSanitario() {
                 }}
               >
                 <div className="button" style={{ width: '10vw' }}>
-                  {pacientes.filter(valor => valor.aih == item.aih).map(valor => valor.unidade_origem)}
+                  {pacientes.filter(valor => valor.aih == item.aih).slice(-1).map(valor => valor.unidade_origem)}
                 </div>
                 <div className="button" style={{ width: '10vw' }}>
                   {item.protocolo}
@@ -413,25 +425,20 @@ function TransporteSanitario() {
                 </div>
                 <div className="button"
                   style={{
-                    width: window.innerWidth > 1200 ? '20vw' : '10vw',
+                    width: '20vw',
                     display: window.innerWidth > 750 ? 'flex' : 'none',
                   }}>
-                  {pacientes.filter(valor => valor.aih == item.aih).map(valor => valor.nome_paciente)}
+                  {pacientes.filter(valor => valor.aih == item.aih).slice(-1).map(valor => valor.nome_paciente)}
                 </div>
-                <div className={item.unidade_destino == null ? "button destaque" : "button-green"} style={{ width: '10vw' }}>
+                <div className="button" style={{ width: '10vw' }}>
                   {item.unidade_destino}
                 </div>
                 <div
                   onClick={item.status == 'TRANSPORTE SOLICITADO' ?
-                    () => { makeObj(item); setviewfrota(1) } :
-                    item.status == 'TRANSPORTE LIBERADO' ? () => document.getElementById("mostraambulancia").style.display = 'flex' :
+                    (e) => { makeObj(item); setviewfrota(1); e.stopPropagation(); } :
+                    item.status == 'TRANSPORTE LIBERADO' ? (e) => { document.getElementById("mostraambulancia").style.display = 'flex'; e.stopPropagation(); } :
                       () => null}
-                  className={
-                    item.status == 'TRANSPORTE SOLICITADO' ? 'button destaque' : // requer tomada de ação, por isso o destaque.
-                      item.status == 'TRANSPORTE LIBERADO' ? 'button-green' :
-                        item.status == 'TRANSPORTE FINALIZADO' ? 'button-green' :
-                          item.status.includes("CANCELADO") == true ? 'button-red' :
-                            'button'}
+                  className={item.status == 'TRANSPORTE SOLICITADO' ? 'button destaque' : 'button'} // requer tomada de ação, por isso o destaque.
                   style={{ width: '10vw', position: 'relative' }}>
                   {item.status}
                   {MonstraAmbulancia(item)}

@@ -133,10 +133,10 @@ body {
   0% {
     background-color: var(--cor1);
   }
-  80% {
+  50% {
     background-color: var(--cor4);
   }
-  0% {
+  100% {
     background-color: var(--cor1);
   }
 }
@@ -180,10 +180,74 @@ body {
   border-width: 5px;
   border-radius: 5px;
   cursor: default;
-  margin: 5px;
-  padding: 5px;
-  padding-right: 20px; /* desconta a largura da barra de scroll */
+  margin: 0px;
+  margin-top: 0px;
+  margin-bottom: 0px;
+  padding: 0px;
   box-shadow: none;
+}
+
+.header-scroll {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: "center";
+  align-self: center;
+  overflow-y: scroll;
+  overflow-x: hidden;
+  background-color: transparent;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px;
+  border-radius: 5px;
+  cursor: default;
+  margin: 0px;
+  padding: 0px;
+  padding-right: 3px;
+  box-shadow: none;
+}
+
+.header-scroll::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.header-scroll::-webkit-scrollbar-track {
+  background-color: transparent;
+  border-radius: 5px;
+}
+
+.header-scroll::-webkit-scrollbar-button {
+  display: none;
+}
+
+.header-scroll::-webkit-scrollbar-corner {
+  display: none;
+}
+
+.header-scroll::-webkit-scrollbar-thumb {
+  background-color: transparent;
+  border-radius: 5px;
+  transition: 500ms, 500ms ease-in-out;
+}
+
+.header-scroll::-webkit-scrollbar-thumb:hover {
+  background-color: transparent;
+  border-radius: 5px;
+  transition: 500ms, 500ms ease-in-out;
+}
+
+.header-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin: 5px;
+  margin-top: 0px;
+  margin-bottom: 0px;
+  padding: 5px;
+  padding-top: 0px;
+  padding-bottom: 0px;
 }
 
 .scroll {
@@ -640,68 +704,68 @@ ESTILOS VARIÁVEIS CONFORME A RESPONSIVIDADE.
 /* LAPTOPS */
 @media only screen and (min-width: 769px) and (max-width: 1024px) {
   .text3 {
-    font-size: 16px;
+    font-size: 14px;
   }
   .textarea {
-    font-size: 14px;
+    font-size: 12px;
   }
   .input {
-    font-size: 14px;
+    font-size: 12px;
   }
   .text1 {
-    font-size: 14px;
+    font-size: 12px;
   }
   .text2 {
-    font-size: 14px;
+    font-size: 12px;
   }
   .button {
-    font-size: 14px;
+    font-size: 12px;
   }
   .button-green {
-    font-size: 14px;
+    font-size: 12px;
   }
   .button-red {
-    font-size: 14px;
+    font-size: 12px;
   }
   .button-yellow {
-    font-size: 14px;
+    font-size: 12px;
   }
   .button-transparent {
-    font-size: 14px;
+    font-size: 12px;
   }
 }
 
 /* DESKTOP */
 @media only screen and (min-width: 1025px) and (max-width: 1200px) {
   .text3 {
-    font-size: 16px;
+    font-size: 14px;
   }
   .textarea {
-    font-size: 14px;
+    font-size: 12px;
   }
   .input {
-    font-size: 14px;
+    font-size: 12px;
   }
   .text1 {
-    font-size: 14px;
+    font-size: 12px;
   }
   .text2 {
-    font-size: 14px;
+    font-size: 12px;
   }
   .button {
-    font-size: 14px;
+    font-size: 12px;
   }
   .button-green {
-    font-size: 14px;
+    font-size: 12px;
   }
   .button-red {
-    font-size: 14px;
+    font-size: 12px;
   }
   .button-yellow {
-    font-size: 14px;
+    font-size: 12px;
   }
   .button-transparent {
-    font-size: 14px;
+    font-size: 12px;
   }
 }
 

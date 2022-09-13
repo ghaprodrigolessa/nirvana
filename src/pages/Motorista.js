@@ -19,7 +19,7 @@ function Motorista() {
     pacientes, setpacientes,
     settoast,
     setdialogo,
-    settransportes,
+    settransportes, transportes,
   } = useContext(Context);
 
   var html = 'http://localhost:3333/'
@@ -69,101 +69,43 @@ function Motorista() {
       leito_destino: obj.leito_destino
     }
     axios.post(html + 'update_paciente/' + obj.id, objeto).then(() => {
-      loadPacientes();
+      // ok.
     });
-  }
-
-  // objetos utilizados para atualizar registros de paciente (mudanças no status do transporte) e de transporte.
-  // estados para os registro de paciente e transporte selecionados.
-  const [objpaciente, setobjpaciente] = useState({});
-  const [objtransporte, setobjtransporte] = useState({});
-  const makeObj = (item) => {
-    // resgatando registro do paciente associado ao pedido de transporte empenhado.
-    pacientes.filter(valor => valor.aih == item.aih && valor.status == 'TRANSPORTE SOLICITADO').map(valor => {
-      setobjpaciente({
-        id: valor.id,
-        aih: valor.aih,
-        procedimento: valor.procedimento,
-        unidade_origem: valor.unidade_origem,
-        setor_origem: valor.setor_origem,
-        nome_paciente: valor.nome_paciente,
-        nome_mae: valor.nome_mae,
-        dn_paciente: valor.dn_paciente,
-        status: 'TRANSPORTE LIBERADO',
-        unidade_destino: valor.unidade_destino,
-        setor_destino: valor.setor_destino,
-        indicador_data_cadastro: valor.indicador_data_cadastro,
-        indicador_data_confirmacao: valor.indicador_data_confirmacao,
-        indicador_relatorio: valor.indicador_relatorio,
-        indicador_solicitacao_transporte: valor.indicador_solicitacao_transporte,
-        indicador_saida_origem: valor.indicador_saida_origem,
-        indicador_chegada_destino: valor.indicador_chegada_destino,
-        dados_susfacil: valor.dados_susfacil,
-        exames_ok: valor.exames_ok,
-        aih_ok: valor.aih_ok,
-        glasgow: valor.glasgow,
-        pas: valor.pas,
-        pad: valor.pad,
-        fc: valor.fc,
-        fr: valor.fr,
-        sao2: valor.sao2,
-        ofertao2: valor.ofertao2,
-        tipo_leito: valor.tipo_leito,
-        contato_nome: valor.contato_nome,
-        contato_telefone: valor.contato_telefone,
-        leito_destino: valor.leito_destino
-      })
-      return null;
-    });
-    // criando o objeto para atualizaçao do registro de transporte.
-    setobjtransporte(
-      {
-        id: item.id,
-        aih: item.aih,
-        protocolo: item.protocolo,
-        id_ambulancia: item.codigo,
-        finalidade: item.finalidade,
-        data_pedido: item.data_pedido,
-        unidade_destino: item.unidade_destino,
-        setor_destino: item.setor_destino,
-        status: 'TRANSPORTE LIBERADO',
-        justificativa_recusa: item.justificativa_recusa
-      }
-    )
   }
 
   // carregar lista de transportes.
-  const [transporte, settransporte] = useState([]);
   const loadTransportes = (codigo) => {
     axios.get(html + 'list_transportes').then((response) => {
-      settransportes(response.data);
       var x = [0, 1];
       var y = [0, 1];
       x = response.data.rows;
       if (x.length > 0) {
         y = x.filter(item => item.id_ambulancia == codigo);
-        settransporte(y);
+        settransportes(y);
       }
     })
   }
 
   // atualizar registro de transportes.
-  const updateTransporte = (parametro) => {
+  const updateTransporte = (parametro, status, justificativa) => {
     var objeto = {
-      aih: parametro.obj.aih,
-      protocolo: parametro.obj.protocolo,
-      id_ambulancia: parametro.obj.id_ambulancia,
-      finalidade: parametro.obj.finalidade,
-      data_pedido: parametro.obj.data_pedido,
-      unidade_destino: parametro.obj.unidade_destino,
-      setor_destino: parametro.obj.setor_destino,
-      status: parametro.status,
-      justificativa_recusa: parametro.justificativa,
+      aih: parametro.aih,
+      protocolo: parametro.protocolo,
+      id_ambulancia: parametro.id_ambulancia,
+      finalidade: parametro.finalidade,
+      data_pedido: parametro.data_pedido,
+      unidade_destino: parametro.unidade_destino,
+      setor_destino: parametro.setor_destino,
+      status: status,
+      justificativa_recusa: justificativa,
     }
-    axios.post(html + 'update_transporte/' + parametro.obj.id, objeto).then(() => {
-      toast(settoast, parametro.obj.status, 'rgb(82, 190, 128, 1', 3000);
+    console.log(objeto);
+
+    axios.post(html + 'update_transporte/' + parametro.id, objeto).then(() => {
+      toast(settoast, parametro.status, 'rgb(82, 190, 128, 1', 3000);
       loadTransportes();
     });
+
   }
 
   // carregar frota de ambulâncias.
@@ -175,14 +117,14 @@ function Motorista() {
   }
 
   // atualizar registro de uma ambulância (atribuindo motorista ao veículo).
-  const updateAmbulancia = (codigo) => {
+  const updateAmbulancia = (codigo, status) => {
     if (ambulancias.filter(item => item.codigo == codigo).length > 0) {
       let idambulancia = ambulancias.filter(item => item.codigo == codigo).map(item => item.id).pop();
       let statusambulancia = ambulancias.filter(item => item.codigo == codigo).map(item => item.status).pop();
       var obj = {
         codigo: codigo,
         motorista: usuario.nome,
-        status: statusambulancia,
+        status: status,
       }
       // console.log(obj);
       axios.post(html + 'update_ambulancia/' + idambulancia, obj).then(() => {
@@ -223,7 +165,7 @@ function Motorista() {
             timeout = setTimeout(() => {
               setcodigo(e.target.value);
               // atualiza ambulância com nome do motorista logado.
-              updateAmbulancia(e.target.value);
+              updateAmbulancia(e.target.value, ambulancias.filter(item => item.codigo == codigo).map(item => item.status).pop());
             }, 3000);
           }}
           type="number"
@@ -241,24 +183,26 @@ function Motorista() {
 
   // componente com as informações do transporte.
   function TicketTransporte() {
-    if (transporte.length > 0) {
+    if (transportes.length > 0) {
       return (
         <div className='scroll'
           style={{
             width: '85vw', flexDirection: 'row', justifyContent: 'flex-start',
             padding: 10, margin: 10, overflowX: 'auto', overflowY: 'hidden',
           }}>
-          {transporte.map(item => (
+          {transportes.map(item => (
             <div
               key={'empenho' + item.id}
-              className='card'
+              className={item.status == 'EM TRANSPORTE' ? 'card destaque' : 'card'}
               style={{
                 display: viewcomponentes == 2 ? 'flex' : 'none',
                 justifyContent: 'space-between',
                 padding: 10,
-                margin: 10
+                margin: 10,
+                backgroundColor: item.status == 'TRANSPORTE CONCLUÍDO' ? 'rgb(82, 190, 128, 1)' : item.status == 'TRANSPORTE CANCELADO' ? 'rgb(231, 76, 60, 1)' : '',
+                opacity: item.status == 'TRANSPORTE CONCLUÍDO' || item.status == 'TRANSPORTE CANCELADO' ? 0.3 : 1,
               }}>
-              <div className='text1' style={{ color: 'rgb(82, 190, 128, 0.7)', fontSize: 14, margin: 0 }}>
+              <div className='text1' style={{ color: '#ffffff', fontSize: 14, margin: 0 }}>
                 {'PROTOCOLO: ' + item.protocolo}
               </div>
               <div className='text1' style={{ margin: 0 }}>
@@ -279,13 +223,28 @@ function Motorista() {
                 style={{
                   whiteSpace: 'pre-wrap', justifyContent: 'flex-start',
                 }}>
-                {pacientes.filter(valor => valor.aih == item.aih).map(item => item.dados_susfacil)}
+                <div>
+                  {pacientes.filter(valor => valor.aih == item.aih).map(item => '## DADOS VITAIS ##\n PA: ' + item.pas + 'x' + item.pad + 'mmHg\n FC: ' + item.fc + 'bpm FR: ' + item.fr + 'irpm SAO2: ' + item.sao2 + '%')}
+                </div>
+                <div>
+                  {pacientes.filter(valor => valor.aih == item.aih).map(item => '## RESUMO DO CASO ##\n' + item.dados_susfacil)}
+                </div>
               </div>
               <div id="botões de ação"
                 style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center' }}>
                 <div id="iniciar" className='button-green'
-                  style={{ width: 50, height: 50 }}
-                  // onClick={() => } // atualizar registros de ambulância, transporte e paciente com o status "EM TRANSPORTE".
+                  style={{
+                    display: 'flex',
+                    width: 50, height: 50,
+                    opacity: item.status == 'TRANSPORTE LIBERADO' ? 1 : 0.5,
+                    pointerEvents: item.status == 'TRANSPORTE LIBERADO' ? 'auto' : 'none',
+                  }}
+                  // atualizar registros de paciente, transporte e ambulância com o status "EM TRANSPORTE".
+                  onClick={() => {
+                    updatePaciente(pacientes.filter(valor => valor.aih == item.aih).pop(), 'EM TRANSPORTE');
+                    updateTransporte(item, 'EM TRANSPORTE', null);
+                    updateAmbulancia(codigo, 'EM TRANSPORTE');
+                  }}
                   title="INICIAR TRANSPORTE">
                   <img
                     alt=""
@@ -298,8 +257,17 @@ function Motorista() {
                   ></img>
                 </div>
                 <div id="cancelar" className='button-red'
-                  style={{ width: 50, height: 50 }}
-                  // onClick={() => } // atualizar registros de ambulância, transporte e paciente com o status "TRANSPORTE CANCELADO".
+                  style={{
+                    display: 'flex',
+                    width: 50, height: 50,
+                    opacity: item.status == 'TRANSPORTE LIBERADO' || item.status == 'EM TRANSPORTE' ? 1 : 0.5,
+                    pointerEvents: item.status == 'TRANSPORTE LIBERADO' || item.status == 'EM TRANSPORTE' ? 'auto' : 'none',
+                  }}
+                  onClick={() => {
+                    updatePaciente(pacientes.filter(valor => valor.aih == item.aih).pop(), 'TRANSPORTE CANCELADO');
+                    updateTransporte(item, 'TRANSPORTE CANCELADO', null);
+                    updateAmbulancia(codigo, 'TRANSPORTE CANCELADO');
+                  }}
                   title="CANCELAR TRANSPORTE">
                   <img
                     alt=""
@@ -312,8 +280,17 @@ function Motorista() {
                   ></img>
                 </div>
                 <div id="concluir" className='button-green'
-                  style={{ width: 50, height: 50 }}
-                  // onClick={() => } // atualizar registros de ambulância, transporte e paciente com o status "TRANSPORTE CONCLUÍDO".
+                  style={{
+                    display: 'flex',
+                    width: 50, height: 50,
+                    opacity: item.status == 'EM TRANSPORTE' ? 1 : 0.5,
+                    pointerEvents: item.status == 'EM TRANSPORTE' ? 'auto' : 'none',
+                  }}
+                  onClick={() => {
+                    updatePaciente(pacientes.filter(valor => valor.aih == item.aih).pop(), 'TRANSPORTE CONCLUÍDO');
+                    updateTransporte(item, 'TRANSPORTE CONCLUÍDO', null);
+                    updateAmbulancia(codigo, 'TRANSPORTE CONCLUÍDO');
+                  }}
                   title="FINALIZAR TRANSPORTE">
                   ✔
                 </div>
