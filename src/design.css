@@ -772,33 +772,33 @@ ESTILOS VARIÁVEIS CONFORME A RESPONSIVIDADE.
 /* TELAS MAIORES */
 @media only screen and (min-width: 1201px) {
   .text3 {
-    font-size: 18px;
+    font-size: 16px;
   }
   .textarea {
-    font-size: 16px;
+    font-size: 14px;
   }
   .input {
-    font-size: 16px;
+    font-size: 14px;
   }
   .text1 {
-    font-size: 16px;
+    font-size: 14px;
   }
   .text2 {
-    font-size: 16px;
+    font-size: 14px;
   }
   .button {
-    font-size: 16px;
+    font-size: 14px;
   }
   .button-green {
-    font-size: 16px;
+    font-size: 14px;
   }
   .button-red {
-    font-size: 16px;
+    font-size: 14px;
   }
   .button-yellow {
-    font-size: 16px;
+    font-size: 14px;
   }
   .button-transparent {
-    font-size: 16px;
+    font-size: 14px;
   }
 }

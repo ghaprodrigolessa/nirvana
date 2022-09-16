@@ -51,6 +51,8 @@ function Login() {
             setpagina(2);
           } else if (objeto.unidade == 'MOTORISTA-TS') {
             setpagina(3);
+          } else if (objeto.unidade == 'GERENTE') {
+            setpagina(4);
           } else {
             setpagina(1);
           }

@@ -1,11 +1,11 @@
 /* eslint eqeqeq: "off" */
-import React, { useContext, useEffect, useCallback, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import axios from 'axios';
 import Context from './Context';
 import moment from 'moment';
 // funções.
 import toast from '../functions/toast';
-import modal from '../functions/modal';
+// import modal from '../functions/modal';
 // imagens.
 import power from '../images/power.svg';
 import deletar from '../images/deletar.svg';
@@ -18,7 +18,6 @@ function Motorista() {
     pagina, setpagina,
     pacientes, setpacientes,
     settoast,
-    setdialogo,
     settransportes, transportes,
   } = useContext(Context);
 
@@ -35,7 +34,7 @@ function Motorista() {
   }
 
   // atualizando o registro do paciente.
-  const updatePaciente = (obj, status) => {
+  const updatePaciente = (obj, status, inicio, fim) => {
     var objeto = {
       aih: obj.aih,
       procedimento: obj.procedimento,
@@ -51,8 +50,8 @@ function Motorista() {
       indicador_data_confirmacao: obj.indicador_data_confirmacao,
       indicador_relatorio: obj.indicador_relatorio,
       indicador_solicitacao_transporte: obj.indicador_solicitacao_transporte,
-      indicador_saida_origem: obj.indicador_saida_origem,
-      indicador_chegada_destino: obj.indicador_chegada_destino,
+      indicador_saida_origem: inicio,
+      indicador_chegada_destino: fim,
       dados_susfacil: obj.dados_susfacil,
       exames_ok: obj.exames_ok,
       aih_ok: obj.aih_ok,
@@ -120,7 +119,7 @@ function Motorista() {
   const updateAmbulancia = (codigo, status) => {
     if (ambulancias.filter(item => item.codigo == codigo).length > 0) {
       let idambulancia = ambulancias.filter(item => item.codigo == codigo).map(item => item.id).pop();
-      let statusambulancia = ambulancias.filter(item => item.codigo == codigo).map(item => item.status).pop();
+      // let statusambulancia = ambulancias.filter(item => item.codigo == codigo).map(item => item.status).pop();
       var obj = {
         codigo: codigo,
         motorista: usuario.nome,
@@ -241,7 +240,7 @@ function Motorista() {
                   }}
                   // atualizar registros de paciente, transporte e ambulância com o status "EM TRANSPORTE".
                   onClick={() => {
-                    updatePaciente(pacientes.filter(valor => valor.aih == item.aih).pop(), 'EM TRANSPORTE');
+                    updatePaciente(pacientes.filter(valor => valor.aih == item.aih).pop(), 'EM TRANSPORTE', moment(), null);
                     updateTransporte(item, 'EM TRANSPORTE', null);
                     updateAmbulancia(codigo, 'EM TRANSPORTE');
                   }}
@@ -264,7 +263,7 @@ function Motorista() {
                     pointerEvents: item.status == 'TRANSPORTE LIBERADO' || item.status == 'EM TRANSPORTE' ? 'auto' : 'none',
                   }}
                   onClick={() => {
-                    updatePaciente(pacientes.filter(valor => valor.aih == item.aih).pop(), 'TRANSPORTE CANCELADO');
+                    updatePaciente(pacientes.filter(valor => valor.aih == item.aih).pop(), 'TRANSPORTE CANCELADO', null, null);
                     updateTransporte(item, 'TRANSPORTE CANCELADO', null);
                     updateAmbulancia(codigo, 'TRANSPORTE CANCELADO');
                   }}
@@ -287,7 +286,7 @@ function Motorista() {
                     pointerEvents: item.status == 'EM TRANSPORTE' ? 'auto' : 'none',
                   }}
                   onClick={() => {
-                    updatePaciente(pacientes.filter(valor => valor.aih == item.aih).pop(), 'TRANSPORTE CONCLUÍDO');
+                    updatePaciente(pacientes.filter(valor => valor.aih == item.aih).pop(), 'TRANSPORTE CONCLUÍDO', pacientes.filter(valor => valor.aih == item.aih).map(item => item.indicador_saida_origem), moment());
                     updateTransporte(item, 'TRANSPORTE CONCLUÍDO', null);
                     updateAmbulancia(codigo, 'TRANSPORTE CONCLUÍDO');
                   }}

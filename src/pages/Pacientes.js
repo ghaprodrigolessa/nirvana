@@ -174,7 +174,6 @@ function Pacientes() {
     });
   }
 
-  var interval = null;
   var timeout = null;
   useEffect(() => {
     if (pagina == 1) {
@@ -190,6 +189,8 @@ function Pacientes() {
   }, [pagina])
 
   // atualizando dados.
+  /*
+  var intervall = null;
   const refreshData = () => {
     clearInterval(interval);
     interval = setInterval(() => {
@@ -200,6 +201,7 @@ function Pacientes() {
       }, 2000);
     }, 30000);
   }
+  */
 
   function RefreshLogo() {
     return (

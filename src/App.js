@@ -8,6 +8,7 @@ import Login from './pages/Login';
 import Pacientes from './pages/Pacientes';
 import TransporteSanitario from './pages/TransporteSanitario';
 import Motorista from './pages/Motorista';
+import Indicadores from './pages/Indicadores';
 // componentes.
 import Toast from './components/Toast';
 import Modal from './components/Modal';
@@ -39,6 +40,7 @@ function App() {
         <Motorista></Motorista>
         <Toast></Toast>
         <Modal></Modal>
+        <Indicadores></Indicadores>
       </div>
     </Context.Provider>
   );
