@@ -7,6 +7,7 @@ import moment, { isMoment } from 'moment';
 import toast from '../functions/toast';
 // imagens.
 import power from '../images/power.svg';
+import refresh from '../images/refresh.svg';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -80,8 +81,7 @@ function Indicadores() {
   // carregar lista de pacientes internados.
   const [pacientes, setpacientes] = useState([0, 1]);
   const [pacientesgrafico, setpacientesgrafico] = useState([0, 1]);
-  const loadPacientes = () => {
-    console.log('ACIONOU');
+  const loadPacientes = (arraydays) => {
     axios.get(html + 'list_pacientes').then((response) => {
       var x = [0, 1];
       x = response.data.rows;
@@ -91,13 +91,29 @@ function Indicadores() {
       z = x.filter(item => moment(item.indicador_data_cadastro) >= datainicio && moment(item.indicador_data_cadastro) <= datatermino);
       setpacientes(y);
       setpacientesgrafico(z);
-      console.log('INTERVALO DE DATAS: ' + datainicio.format('DD/MM/YY') + ' A ' + datatermino.format('DD/MM/YY'));
-      console.log('REGISTROS: ' + y.length);
       getIndicadores(y);
+      // funções para captura de dados para o gráfico em linha.
       setTimeout(() => {
         arraydays.map(item => { catchTodasAihsCadastradas(item); catchNovasAihsCadastradas(item); catchAtivasAihsCadastradas(item) });
-      }, 3000);
+      }, 1000);
     })
+  }
+
+  // mapeando os registros de pacientes com AIH para cada data pesquisada.
+  var vararraytodasaihs = [];
+  const catchTodasAihsCadastradas = (data) => {
+    vararraytodasaihs.push(pacientes.filter(item => moment(item.indicador_data_cadastro) < moment(data, 'DD/MM/YY')).length);
+    setarraytodasaihs(vararraytodasaihs);
+  }
+  var vararraynovasaihs = [];
+  const catchNovasAihsCadastradas = (data) => {
+    vararraynovasaihs.push(pacientes.filter(item => moment(item.indicador_data_cadastro).startOf('day').diff(moment(data, 'DD/MM/YY'), 'days') == 0).length);
+    setarraynovasaihs(vararraynovasaihs);
+  }
+  var vararrayativasaihs = [];
+  const catchAtivasAihsCadastradas = (data) => {
+    vararrayativasaihs.push(pacientes.filter(item => item.status == 'AGUARDANDO VAGA' && moment(item.indicador_data_cadastro) < moment(data, 'DD/MM/YY')).length);
+    setarrayativasaihs(vararrayativasaihs);
   }
 
   // INDICADORES
@@ -125,7 +141,6 @@ function Indicadores() {
         // cálculo do tempo médio (total / número de pacientes).
         let mediacadastrovaga = moment.duration(Math.ceil(totalcadastrovaga / pacientes.length));
         settempocadastrovaga(mediacadastrovaga);
-        console.log('PACIENTES: ' + todoscadastrovaga);
       }
       // ## 2. TEMPO CONFIRMAÇÃO DA VAGA >> RELATÓRIO MÉDICO ##
       let todosvagarelatorio = pacientes.map(item => moment(item.indicador_relatorio).diff(item.indicador_data_confirmacao), 'days');
@@ -149,7 +164,7 @@ function Indicadores() {
         settempotransportesaida(mediatransportesaida);
       }
       // ## 5. TEMPO DE SAÍDA DA ORIGEM >> CHEGADA AO DESTINO ##
-      let todossaidadestino = pacientes.map(item => moment(item.indicador_chegada_destino).diff(item.indicador_origem_saida), 'days');
+      let todossaidadestino = pacientes.map(item => moment(item.indicador_chegada_destino).diff(item.indicador_saida_origem), 'days');
       if (pacientes.length > 0) {
         let totalsaidadestino = todossaidadestino.reduce(soma);
         let mediasaidadestino = moment.duration(Math.ceil(totalsaidadestino / pacientes.length));
@@ -207,7 +222,7 @@ function Indicadores() {
         mediatransportesaida = moment.duration(Math.ceil(totaltransportesaida / pacientes.filter(item => item.unidade_origem == unidade).length));
       }
       // ## 5. TEMPO DE SAÍDA DA ORIGEM >> CHEGADA AO DESTINO ##
-      let todossaidadestino = pacientes.filter(item => item.unidade_origem == unidade).map(item => moment(item.indicador_chegada_destino).diff(item.indicador_origem_saida), 'days');
+      let todossaidadestino = pacientes.filter(item => item.unidade_origem == unidade).map(item => moment(item.indicador_chegada_destino).diff(item.indicador_saida_origem), 'days');
       let totalsaidadestino = null;
       if (todossaidadestino.length > 0) {
         totalsaidadestino = todossaidadestino.reduce(soma);
@@ -228,9 +243,9 @@ function Indicadores() {
             <div id="internação >> vaga" className='card'
               style={{
                 width: '12vw', height: '14vw', padding: 10, margin: 10,
-                backgroundColor: mediacadastrovaga.days() > 5 ? 'rgb(231, 76, 60, 1)' : // vermelho se > 5 dias.
-                  mediacadastrovaga.days() > 2 && mediacadastrovaga.days() < 6 ? 'rgb(229, 126, 52, 1)' : // amarelo se 3 a 5 dias.
-                    'rgb(82, 190, 128, 1)' // verde se até 2 dias.
+                backgroundColor: mediacadastrovaga.days() > 5 ? 'rgb(231, 76, 60, 0.7)' : // vermelho se > 5 dias.
+                  mediacadastrovaga.days() > 2 && mediacadastrovaga.days() < 6 ? 'rgb(229, 126, 52, 0.7)' : // amarelo se 3 a 5 dias.
+                    'rgb(82, 190, 128, 0.7)' // verde se até 2 dias.
               }}>
               <div className='text2' style={{ fontSize: 18, color: '#ffffff' }}>{mediacadastrovaga.days() + 'D ' + mediacadastrovaga.hours() + 'H ' + mediacadastrovaga.minutes() + 'M'}</div>
               <div className='text2'>TEMPO MÉDIO DE INTERNAÇÃO ATÉ A LIBERAÇÃO DA VAGA</div>
@@ -239,9 +254,9 @@ function Indicadores() {
             <div id="vaga >> relatório" className='card'
               style={{
                 width: '12vw', height: '14vw', padding: 10, margin: 10,
-                backgroundColor: mediavagarelatorio.hours() > 2 ? 'rgb(231, 76, 60, 1)' : // vermelho se > 2 horas.
-                  mediavagarelatorio.hours() > 1 && mediavagarelatorio.hours() < 2 ? 'rgb(229, 126, 52, 1)' : // amarelo se 1 a 2 horas.
-                    'rgb(82, 190, 128, 1)' // verde se até 1 hora.
+                backgroundColor: mediavagarelatorio.hours() > 2 ? 'rgb(231, 76, 60, 0.7)' : // vermelho se > 2 horas.
+                  mediavagarelatorio.hours() > 1 && mediavagarelatorio.hours() < 2 ? 'rgb(229, 126, 52, 0.7)' : // amarelo se 1 a 2 horas.
+                    'rgb(82, 190, 128, 0.7)' // verde se até 1 hora.
               }}>
               <div className='text2' style={{ fontSize: 18, color: '#ffffff' }}>{mediavagarelatorio.hours() + 'H ' + mediavagarelatorio.minutes() + 'M'}</div>
               <div className='text2'>TEMPO MÉDIO DE LIBERAÇÃO DA VAGA ATÉ A EMISSÃO DO RELATÓRIO DE TRANSFERÊNCIA</div>
@@ -250,9 +265,9 @@ function Indicadores() {
             <div id="relatório >> pedido transporte" className='card'
               style={{
                 width: '12vw', height: '14vw', padding: 10, margin: 10,
-                backgroundColor: mediarelatoriotransporte.minutes() > 30 ? 'rgb(231, 76, 60, 1)' : // vermelho se > 30 minutos.
-                  mediarelatoriotransporte.minutes() > 15 && mediarelatoriotransporte.minutes() < 30 ? 'rgb(229, 126, 52, 1)' : // amarelo se 15 a 30 minutos.
-                    'rgb(82, 190, 128, 1)' // verde se até 15 minutos.
+                backgroundColor: mediarelatoriotransporte.minutes() > 30 ? 'rgb(231, 76, 60, 0.7)' : // vermelho se > 30 minutos.
+                  mediarelatoriotransporte.minutes() > 15 && mediarelatoriotransporte.minutes() < 30 ? 'rgb(229, 126, 52, 0.7)' : // amarelo se 15 a 30 minutos.
+                    'rgb(82, 190, 128, 0.7)' // verde se até 15 minutos.
               }}>
               <div className='text2' style={{ fontSize: 18, color: '#ffffff' }}>{mediarelatoriotransporte.days() + 'D ' + mediarelatoriotransporte.hours() + 'H ' + mediarelatoriotransporte.minutes() + 'M'}</div>
               <div className='text2'>TEMPO MÉDIO DE LIBERAÇÃO DO RELATÓRIO DE TRANSFERÊNCIA ATÉ O ACIONAMENTO DO TRANSPORTE</div>
@@ -261,9 +276,9 @@ function Indicadores() {
             <div id="pedido transporte >> saída" className='card'
               style={{
                 width: '12vw', height: '14vw', padding: 10, margin: 10,
-                backgroundColor: mediatransportesaida.hours() > 2 ? 'rgb(231, 76, 60, 1)' : // vermelho se > 2 horas.
-                  mediatransportesaida.hours() > 1 && mediatransportesaida.hours() < 2 ? 'rgb(229, 126, 52, 1)' : // amarelo se 1 a 2 horas.
-                    'rgb(82, 190, 128, 1)' // verde se até 1 hora.
+                backgroundColor: mediatransportesaida.hours() > 2 ? 'rgb(231, 76, 60, 0.7)' : // vermelho se > 2 horas.
+                  mediatransportesaida.hours() > 1 && mediatransportesaida.hours() < 2 ? 'rgb(229, 126, 52, 0.7)' : // amarelo se 1 a 2 horas.
+                    'rgb(82, 190, 128, 0.7)' // verde se até 1 hora.
               }}>
               <div className='text2' style={{ fontSize: 18, color: '#ffffff' }}>{mediatransportesaida.hours() + 'H ' + mediatransportesaida.minutes() + 'M'}</div>
               <div className='text2'>TEMPO MÉDIO DE ACIONAMENTO DO TRANSPORTE ATÉ A SAÍDA DO PACIENTE DA UNIDADE</div>
@@ -272,9 +287,9 @@ function Indicadores() {
             <div id="saída >> chegada ao destino" className='card'
               style={{
                 width: '12vw', height: '14vw', padding: 10, margin: 10,
-                backgroundColor: mediasaidadestino.hours() > 1 ? 'rgb(231, 76, 60, 1)' : // vermelho se > 1 hora.
-                  mediasaidadestino.minutes() > 30 && mediasaidadestino.minutes() < 15 ? 'rgb(229, 126, 52, 1)' : // amarelo se 15 a 30 minutos.
-                    'rgb(82, 190, 128, 1)' // verde se até 15 minutos.
+                backgroundColor: mediasaidadestino.hours() > 1 ? 'rgb(231, 76, 60, 0.7)' : // vermelho se > 1 hora.
+                  mediasaidadestino.minutes() > 30 && mediasaidadestino.minutes() < 15 ? 'rgb(229, 126, 52, 0.7)' : // amarelo se 15 a 30 minutos.
+                    'rgb(82, 190, 128, 0.7)' // verde se até 15 minutos.
               }}>
               <div className='text2' style={{ fontSize: 18, color: '#ffffff' }}>{mediasaidadestino.hours() + 'H ' + mediasaidadestino.minutes() + 'M'}</div>
               <div className='text2'>TEMPO MÉDIO DE DESLOCAMENTO DA UNIDADE DE ORIGEM À UNIDADE DE DESTINO</div>
@@ -283,12 +298,12 @@ function Indicadores() {
             <div id="saída >> chegada ao destino" className='card'
               style={{
                 width: '12vw', height: '14vw', padding: 10, margin: 10,
-                backgroundColor: mediapermanenciageral.days() > 5 ? 'rgb(231, 76, 60, 1)' : // vermelho se > 5 dias.
-                  mediapermanenciageral.days() > 3 && mediapermanenciageral.days() < 5 ? 'rgb(229, 126, 52, 1)' : // amarelo se 3 a 5 dias.
-                    'rgb(82, 190, 128, 1)' // verde se até 3 dias.
+                backgroundColor: mediapermanenciageral.days() > 5 ? 'rgb(231, 76, 60, 0.7)' : // vermelho se > 5 dias.
+                  mediapermanenciageral.days() > 3 && mediapermanenciageral.days() < 5 ? 'rgb(229, 126, 52, 0.7)' : // amarelo se 3 a 5 dias.
+                    'rgb(82, 190, 128, 0.7)' // verde se até 3 dias.
               }}>
-              <div className='text2' style={{ fontSize: 18, color: '#ffffff' }}>{mediapermanenciageral.hours() + 'H ' + mediapermanenciageral.minutes() + 'M'}</div>
-              <div className='text2'>TEMPO MÉDIO DE DESLOCAMENTO DA UNIDADE DE ORIGEM À UNIDADE DE DESTINO</div>
+              <div className='text2' style={{ fontSize: 18, color: '#ffffff' }}>{mediapermanenciageral.days() + 'D ' + mediapermanenciageral.hours() + 'H ' + mediapermanenciageral.minutes() + 'M'}</div>
+              <div className='text2'>TEMPO DE PERMANÊNCIA GERAL</div>
             </div>
 
           </div>
@@ -340,7 +355,6 @@ function Indicadores() {
   // mês e ano atuais.
   const [datainicio, setdatainicio] = useState(moment().startOf('month'));
   const [datatermino, setdatatermino] = useState(moment());
-  var timeout = null;
   function FilterData() {
     return (
       <div className="card"
@@ -359,21 +373,7 @@ function Indicadores() {
             id="inputDataInicio"
             onFocus={(e) => (e.target.placeholder = '')}
             onBlur={(e) => (e.target.placeholder = 'INÍCIO')}
-            onKeyUp={() => {
-              var data1 = moment(document.getElementById("inputDataInicio").value, 'DD/MM/YYYY');
-              clearTimeout(timeout);
-              timeout = setTimeout(() => {
-                if (isMoment(data1) == true) {
-                  setdatainicio(data1);
-                  // document.getElementById('inputDatainicio').value = moment(data).format('DD/MM/YYYY');
-                } else {
-                  toast(settoast, 'DATA INVÁLIDA', 'rgb(231, 76, 60, 1)', 3000);
-                  document.getElementById("inputDatainicio").value = '';
-                  data = '';
-                }
-              }, 3000);
-            }}
-            defaultValue={moment(datainicio).format('DD/MM/YYYY')}
+            defaultValue={datainicio.format('DD/MM/YYYY')}
             type="text"
             maxLength={10}
             style={{
@@ -395,21 +395,7 @@ function Indicadores() {
             id="inputDataTermino"
             onFocus={(e) => (e.target.placeholder = '')}
             onBlur={(e) => (e.target.placeholder = 'TÉRMINO')}
-            onKeyUp={() => {
-              var data2 = moment(document.getElementById("inputDataTermino").value, 'DD/MM/YYYY');
-              clearTimeout(timeout);
-              timeout = setTimeout(() => {
-                if (isMoment(data2) == true) {
-                  setdatatermino(data2);
-                  // document.getElementById('inputDataTermino').value = moment(data2).format('DD/MM/YYYY');
-                } else {
-                  toast(settoast, 'DATA INVÁLIDA', 'rgb(231, 76, 60, 1)', 3000);
-                  document.getElementById("inputDataTermino").value = '';
-                  data2 = '';
-                }
-              }, 3000);
-            }}
-            defaultValue={moment(datatermino).format('DD/MM/YYYY')}
+            defaultValue={datatermino.format('DD/MM/YYYY')}
             type="text"
             maxLength={10}
             style={{
@@ -420,6 +406,32 @@ function Indicadores() {
               alignSelf: 'center'
             }}
           ></input>
+        </div>
+        <div className="button" style={{ width: 50, height: 50, alignSelf: 'center' }}
+          onClick={() => {
+            var data1 = moment(document.getElementById("inputDataInicio").value, 'DD/MM/YYYY');
+            var data2 = moment(document.getElementById("inputDataTermino").value, 'DD/MM/YYYY');
+            if (isMoment(data1) == true && isMoment(data2) == true) {
+              setdatainicio(data1);
+              setdatatermino(data2);
+            } else {
+              toast(settoast, 'DATA INVÁLIDA', 'rgb(231, 76, 60, 1)', 3000);
+              document.getElementById("inputDatainicio").value = '';
+              document.getElementById("inputDatatermino").value = '';
+              data1 = '';
+              data2 = '';
+            }
+          }}
+        >
+          <img
+            alt=""
+            src={refresh}
+            style={{
+              margin: 10,
+              height: 30,
+              width: 30,
+            }}
+          ></img>
         </div>
       </div>
     )
@@ -435,9 +447,9 @@ function Indicadores() {
             <div id="internação >> vaga" className='card'
               style={{
                 width: '12vw', height: '14vw', padding: 10, margin: 10,
-                backgroundColor: tempocadastrovaga.days() > 5 ? 'rgb(231, 76, 60, 1)' : // vermelho se > 5 dias.
-                  tempocadastrovaga.days() > 2 && tempocadastrovaga.days() < 6 ? 'rgb(229, 126, 52, 1)' : // amarelo se 3 a 5 dias.
-                    'rgb(82, 190, 128, 1)' // verde se até 2 dias.
+                backgroundColor: tempocadastrovaga.days() > 5 ? 'rgb(231, 76, 60, 0.7)' : // vermelho se > 5 dias.
+                  tempocadastrovaga.days() > 2 && tempocadastrovaga.days() < 6 ? 'rgb(229, 126, 52, 0.7)' : // amarelo se 3 a 5 dias.
+                    'rgb(82, 190, 128, 0.7)' // verde se até 2 dias.
               }}>
               <div className='text2' style={{ fontSize: 18, color: '#ffffff' }}>{tempocadastrovaga.days() + 'D ' + tempocadastrovaga.hours() + 'H ' + tempocadastrovaga.minutes() + 'M'}</div>
               <div className='text2'>TEMPO MÉDIO DE INTERNAÇÃO ATÉ A LIBERAÇÃO DA VAGA</div>
@@ -445,9 +457,9 @@ function Indicadores() {
             <div id="vaga >> relatório" className='card'
               style={{
                 width: '12vw', height: '14vw', padding: 10, margin: 10,
-                backgroundColor: tempovagarelatorio.hours() > 2 ? 'rgb(231, 76, 60, 1)' : // vermelho se > 2 horas.
-                  tempovagarelatorio.hours() > 1 && tempovagarelatorio.hours() < 2 ? 'rgb(229, 126, 52, 1)' : // amarelo se 1 a 2 horas.
-                    'rgb(82, 190, 128, 1)' // verde se até 1 hora.
+                backgroundColor: tempovagarelatorio.hours() > 2 ? 'rgb(231, 76, 60, 0.7)' : // vermelho se > 2 horas.
+                  tempovagarelatorio.hours() > 1 && tempovagarelatorio.hours() < 2 ? 'rgb(229, 126, 52, 0.7)' : // amarelo se 1 a 2 horas.
+                    'rgb(82, 190, 128, 0.7)' // verde se até 1 hora.
               }}>
               <div className='text2' style={{ fontSize: 18, color: '#ffffff' }}>{tempovagarelatorio.hours() + 'H ' + tempovagarelatorio.minutes() + 'M'}</div>
               <div className='text2'>TEMPO MÉDIO DE LIBERAÇÃO DA VAGA ATÉ A EMISSÃO DO RELATÓRIO DE TRANSFERÊNCIA</div>
@@ -455,9 +467,9 @@ function Indicadores() {
             <div id="relatório >> pedido transporte" className='card'
               style={{
                 width: '12vw', height: '14vw', padding: 10, margin: 10,
-                backgroundColor: temporelatoriotransporte.minutes() > 30 ? 'rgb(231, 76, 60, 1)' : // vermelho se > 30 minutos.
-                  temporelatoriotransporte.minutes() > 15 && temporelatoriotransporte.minutes() < 30 ? 'rgb(229, 126, 52, 1)' : // amarelo se 15 a 30 minutos.
-                    'rgb(82, 190, 128, 1)' // verde se até 15 minutos.
+                backgroundColor: temporelatoriotransporte.minutes() > 30 ? 'rgb(231, 76, 60, 0.7)' : // vermelho se > 30 minutos.
+                  temporelatoriotransporte.minutes() > 15 && temporelatoriotransporte.minutes() < 30 ? 'rgb(229, 126, 52, 0.7)' : // amarelo se 15 a 30 minutos.
+                    'rgb(82, 190, 128, 0.7)' // verde se até 15 minutos.
               }}>
               <div className='text2' style={{ fontSize: 18, color: '#ffffff' }}>{temporelatoriotransporte.days() + 'D ' + temporelatoriotransporte.hours() + 'H ' + temporelatoriotransporte.minutes() + 'M'}</div>
               <div className='text2'>TEMPO MÉDIO DE LIBERAÇÃO DO RELATÓRIO DE TRANSFERÊNCIA ATÉ O ACIONAMENTO DO TRANSPORTE</div>
@@ -465,9 +477,9 @@ function Indicadores() {
             <div id="pedido transporte >> saída" className='card'
               style={{
                 width: '12vw', height: '14vw', padding: 10, margin: 10,
-                backgroundColor: tempotransportesaida.hours() > 2 ? 'rgb(231, 76, 60, 1)' : // vermelho se > 2 horas.
-                  tempotransportesaida.hours() > 1 && tempotransportesaida.hours() < 2 ? 'rgb(229, 126, 52, 1)' : // amarelo se 1 a 2 horas.
-                    'rgb(82, 190, 128, 1)' // verde se até 1 hora.
+                backgroundColor: tempotransportesaida.hours() > 2 ? 'rgb(231, 76, 60, 0.7)' : // vermelho se > 2 horas.
+                  tempotransportesaida.hours() > 1 && tempotransportesaida.hours() < 2 ? 'rgb(229, 126, 52, 0.7)' : // amarelo se 1 a 2 horas.
+                    'rgb(82, 190, 128, 0.7)' // verde se até 1 hora.
               }}>
               <div className='text2' style={{ fontSize: 18, color: '#ffffff' }}>{tempotransportesaida.hours() + 'H ' + tempotransportesaida.minutes() + 'M'}</div>
               <div className='text2'>TEMPO MÉDIO DE ACIONAMENTO DO TRANSPORTE ATÉ A SAÍDA DO PACIENTE DA UNIDADE</div>
@@ -475,9 +487,9 @@ function Indicadores() {
             <div id="saída >> chegada ao destino" className='card'
               style={{
                 width: '12vw', height: '14vw', padding: 10, margin: 10,
-                backgroundColor: temposaidadestino.hours() > 1 ? 'rgb(231, 76, 60, 1)' : // vermelho se > 1 hora.
-                  temposaidadestino.minutes() > 30 && temposaidadestino.minutes() < 15 ? 'rgb(229, 126, 52, 1)' : // amarelo se 15 a 30 minutos.
-                    'rgb(82, 190, 128, 1)' // verde se até 15 minutos.
+                backgroundColor: temposaidadestino.hours() > 1 ? 'rgb(231, 76, 60, 0.7)' : // vermelho se > 1 hora.
+                  temposaidadestino.minutes() > 30 && temposaidadestino.minutes() < 15 ? 'rgb(229, 126, 52, 0.7)' : // amarelo se 15 a 30 minutos.
+                    'rgb(82, 190, 128, 0.7)' // verde se até 15 minutos.
               }}>
               <div className='text2' style={{ fontSize: 18, color: '#ffffff' }}>{temposaidadestino.hours() + 'H ' + temposaidadestino.minutes() + 'M'}</div>
               <div className='text2'>TEMPO MÉDIO DE DESLOCAMENTO DA UNIDADE DE ORIGEM À UNIDADE DE DESTINO</div>
@@ -485,12 +497,12 @@ function Indicadores() {
             <div id="saída >> chegada ao destino" className='card'
               style={{
                 width: '12vw', height: '14vw', padding: 10, margin: 10,
-                backgroundColor: tempopermanenciageral.days() > 5 ? 'rgb(231, 76, 60, 1)' : // vermelho se > 5 dias.
-                  tempopermanenciageral.days() > 3 && tempopermanenciageral.days() < 5 ? 'rgb(229, 126, 52, 1)' : // amarelo se 3 a 5 dias.
-                    'rgb(82, 190, 128, 1)' // verde se até 3 dias.
+                backgroundColor: tempopermanenciageral.days() > 5 ? 'rgb(231, 76, 60, 0.7)' : // vermelho se > 5 dias.
+                  tempopermanenciageral.days() > 3 && tempopermanenciageral.days() < 5 ? 'rgb(229, 126, 52, 0.7)' : // amarelo se 3 a 5 dias.
+                    'rgb(82, 190, 128, 0.7)' // verde se até 3 dias.
               }}>
-              <div className='text2' style={{ fontSize: 18, color: '#ffffff' }}>{tempopermanenciageral.hours() + 'H ' + tempopermanenciageral.minutes() + 'M'}</div>
-              <div className='text2'>TEMPO MÉDIO DE DESLOCAMENTO DA UNIDADE DE ORIGEM À UNIDADE DE DESTINO</div>
+              <div className='text2' style={{ fontSize: 18, color: '#ffffff' }}>{tempopermanenciageral.days() + 'D ' + tempopermanenciageral.hours() + 'H ' + tempopermanenciageral.minutes() + 'M'}</div>
+              <div className='text2'>TEMPO DE PERMANÊNCIA GERAL</div>
             </div>
           </div>
         </div>
@@ -511,18 +523,15 @@ function Indicadores() {
   useEffect(() => {
     if (pagina == 4) {
       mountArrayDaysInterval();
-      loadPacientes();
     }
     // eslint-disable-next-line
-  }, [pagina, datainicio, datatermino, arraydays]);
+  }, [pagina, datainicio, datatermino, arraydays, arraytodasaihs, arraynovasaihs, arrayativasaihs]);
 
   // identificação do usuário.
   function Usuario() {
     return (
       <div style={{
-        // position: 'absolute', top: 10, left: 10,
         display: 'flex', flexDirection: 'row', height: 70,
-        // alignSelf: 'center',
       }}>
         <div className='button-red' style={{ maxHeight: 50, maxWidth: 50 }}
           onClick={() => setpagina(0)} title="SAIR">
@@ -557,31 +566,16 @@ function Indicadores() {
     setTimeout(() => {
       setarraydays([]);
       var adddate = moment(document.getElementById("inputDataInicio").value, 'DD/MM/YYYY');
-      var localarraydays = [];
+      var localarraydays = [datainicio.format('DD/MM/YY')];
       while (adddate < datatermino) {
         adddate = adddate.add(1, 'day');
         localarraydays.push(adddate.format('DD/MM/YY'));
         setarraydays(localarraydays);
-        console.log('ARRAY DATAS: ' + JSON.stringify(arraydays));
       }
+      setTimeout(() => {
+        loadPacientes(localarraydays);
+      }, 2000);
     }, 1000);
-  }
-
-  // mapeando os registros de pacientes com AIH para cada data pesquisada.
-  var vararraytodasaihs = [];
-  const catchTodasAihsCadastradas = (data) => {
-    vararraytodasaihs.push(pacientesgrafico.filter(item => moment(item.indicador_data_cadastro) < moment(data, 'DD/MM/YY')).length);
-    setarraytodasaihs(vararraytodasaihs);
-  }
-  var vararraynovasaihs = [];
-  const catchNovasAihsCadastradas = (data) => {
-    vararraynovasaihs.push(pacientesgrafico.filter(item => moment(item.indicador_data_cadastro).startOf('day').diff(moment(data, 'DD/MM/YY'), 'days') == 0).length);
-    setarraynovasaihs(vararraynovasaihs);
-  }
-  var vararrayativasaihs = [];
-  const catchAtivasAihsCadastradas = (data) => {
-    vararrayativasaihs.push(pacientesgrafico.filter(item => item.status == 'AGUARDANDO VAGA' && moment(item.indicador_data_cadastro) < moment(data, 'DD/MM/YY')).length);
-    setarrayativasaihs(vararrayativasaihs);
   }
 
   const options = {
@@ -589,10 +583,10 @@ function Indicadores() {
       y: {
         display: true,
         min: 0,
-        // max: 30,
+        max: 5,
         ticks: {
           suggestedMin: 0,
-          suggestedMax: 20,
+          suggestedMax: 5,
           stepSize: 1,
         }
       }
@@ -607,6 +601,7 @@ function Indicadores() {
         text: 'GRÁFICO 1',
       },
     },
+    maintainAspectRatio: false,
   };
   const labels = arraydays.map(item => moment(item, 'DD/MM/YY').format('DD/MM'));
   const data = {
@@ -655,7 +650,7 @@ function Indicadores() {
         }}>
         <IndicadoresGerais></IndicadoresGerais>
         {upas.map(item => getIndicadoresPorUnidade(pacientes, item.unidade))}
-        <Line options={options} data={data} />
+        <Line options={options} data={data} height={150} />
       </div>
     </div>
   );
