@@ -216,27 +216,40 @@ function TransporteSanitario() {
                   width: '13vw', height: '13vw'
                 }}
                 onClick={() => {
-                  // capturando informações da ambulância selecionada para o transporte.
-                  setselectedambulancia(
-                    {
-                      id: item.id,
-                      codigo: item.codigo,
-                      motorista: item.motorista,
-                      status: item.status
+                  if (onlystatus == 0) {
+                    // capturando informações da ambulância selecionada para o transporte.
+                    setselectedambulancia(
+                      {
+                        id: item.id,
+                        codigo: item.codigo,
+                        motorista: item.motorista,
+                        status: item.status
+                      }
+                    );
+                    if (item.status != 'INDISPONÍVEL' || item.status != 'INTERVALO' || item.status != 'DESOCUPADA') {
+                      setviewfrota(0);
+                      // atualizar o registro do paciente com o status "TRANSPORTE LIBERADO".
+                      updatePaciente(objpaciente, 'TRANSPORTE LIBERADO');
+                      // atualizar o registro de transporte com o status "TRANSPORTE LIBERADO".
+                      objtransporte.id_ambulancia = item.codigo;
+                      updateTransporte({ obj: objtransporte, status: 'TRANSPORTE LIBERADO', justificativa: null });
+                      // atualizar o status da ambulância com o status "TRANSPORTE".
+                      updateAmbulancia(item, 'EM TRANSPORTE');
+                    } else {
+                      setviewstatusambulancia(1);
+                      // toast(settoast, 'AMBULÂNCIA INDISPONÍVEL', 'rgb(231, 76, 60, 1)', 3000);
                     }
-                  );
-                  if (item.status != 'INDISPONÍVEL' || item.status != 'INTERVALO' || item.status != 'DESOCUPADA') {
-                    setviewfrota(0);
-                    // atualizar o registro do paciente com o status "TRANSPORTE LIBERADO".
-                    updatePaciente(objpaciente, 'TRANSPORTE LIBERADO');
-                    // atualizar o registro de transporte com o status "TRANSPORTE LIBERADO".
-                    objtransporte.id_ambulancia = item.codigo;
-                    updateTransporte({ obj: objtransporte, status: 'TRANSPORTE LIBERADO', justificativa: null });
-                    // atualizar o status da ambulância com o status "TRANSPORTE".
-                    updateAmbulancia(item, 'EM TRANSPORTE');
+
                   } else {
+                    setselectedambulancia(
+                      {
+                        id: item.id,
+                        codigo: item.codigo,
+                        motorista: item.motorista,
+                        status: item.status
+                      }
+                    );
                     setviewstatusambulancia(1);
-                    // toast(settoast, 'AMBULÂNCIA INDISPONÍVEL', 'rgb(231, 76, 60, 1)', 3000);
                   }
                 }}
               >
@@ -263,7 +276,7 @@ function TransporteSanitario() {
 
   // componente para alterar o status da ambulância ociosa ("INTERVALO", "INDISPONÍVEL").
   let statusambulancia = ['OCIOSA', 'INTERVALO', 'INDISPONÍVEL']
-  const [viewstatusambulancia, setviewstatusambulancia] = useState('');
+  const [viewstatusambulancia, setviewstatusambulancia] = useState(0);
   function ViewStatusAmbulancia() {
     return (
       <div className="fundo"
@@ -287,6 +300,7 @@ function TransporteSanitario() {
                 onClick={() => {
                   updateAmbulancia(selectedambulancia, item);
                   setviewstatusambulancia(0);
+                  loadAmbulancias();
                   toast(settoast, 'STATUS DA AMBULÂNCIA ATUALIZADO', 'rgb(82, 190, 128, 1', 3000);
                 }}
               >
@@ -300,7 +314,7 @@ function TransporteSanitario() {
   }
 
   // componente que sinaliza a ambulância empenhada para cada registro de transporte.
-  function MonstraAmbulancia(item) {
+  function MostraAmbulancia(item) {
     return (
       <div
         id="mostraambulancia"
@@ -435,13 +449,13 @@ function TransporteSanitario() {
                 </div>
                 <div
                   onClick={item.status == 'TRANSPORTE SOLICITADO' ?
-                    (e) => { makeObj(item); setviewfrota(1); e.stopPropagation(); } :
+                    (e) => { makeObj(item); setonlystatus(0); setviewfrota(1); e.stopPropagation(); } :
                     item.status == 'TRANSPORTE LIBERADO' ? (e) => { document.getElementById("mostraambulancia").style.display = 'flex'; e.stopPropagation(); } :
                       () => null}
                   className={item.status == 'TRANSPORTE SOLICITADO' ? 'button destaque' : 'button'} // requer tomada de ação, por isso o destaque.
                   style={{ width: '10vw', position: 'relative' }}>
                   {item.status}
-                  {MonstraAmbulancia(item)}
+                  {MostraAmbulancia(item)}
                 </div>
               </div>
               {ControleDoTransporte(item, pacientes.filter(valor => valor.aih == item.aih).pop())}
@@ -512,7 +526,7 @@ function TransporteSanitario() {
         <div
           className='button-green'
           style={{ display: item.status != 'TRANSPORTE LIBERADO' && negativas == 0 ? 'flex' : 'none', width: '15vw', height: 50 }}
-          onClick={() => setviewfrota(1)}
+          onClick={() => { setonlystatus(0); setviewfrota(1) }}
         >
           ACIONAR TRANSPORTE
         </div>
@@ -559,12 +573,36 @@ function TransporteSanitario() {
     )
   }
 
+  // ícone para exibição das ambulâncias (permite apenas a mudança de status, não permite o empenho de transporte).
+  const [onlystatus, setonlystatus] = useState(0);
+  function BtnAmbulancias() {
+    return (
+      <div
+        onClick={() => { setviewfrota(1); setonlystatus(1) }}
+        className='button'
+        title="GERENCIAR FROTA"
+        style={{ position: 'absolute', top: 10, right: 10, width: 50, maxWidth: 50, height: 50, maxHeight: 50 }}>
+        <img
+          alt=""
+          src={ambulancia}
+          style={{
+            margin: 10,
+            padding: 10,
+            height: '100%',
+            width: '100%',
+          }}
+        ></img>
+      </div>
+    )
+  }
+
   return (
     <div style={{ display: pagina == 2 ? 'flex' : 'none' }}>
       <ListaDeTransportes></ListaDeTransportes>
+      <Usuario></Usuario>
+      <BtnAmbulancias></BtnAmbulancias>
       <PainelDeAmbulancias></PainelDeAmbulancias>
       <ViewStatusAmbulancia></ViewStatusAmbulancia>
-      <Usuario></Usuario>
     </div>
   );
 }
